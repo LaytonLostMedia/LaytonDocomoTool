@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+	<RootNamespace>Logic.Domain.Level5Management.Docomo.Contract</RootNamespace>
+	<AssemblyName>Logic.Domain.Level5Management.Docomo.Contract</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Logic.Domain.DocomoManagement.Contract\Logic.Domain.DocomoManagement.Contract.csproj" />
+  </ItemGroup>
+
+</Project>

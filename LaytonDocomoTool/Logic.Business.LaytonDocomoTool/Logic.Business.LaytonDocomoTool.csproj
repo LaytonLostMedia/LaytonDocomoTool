@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+	<RootNamespace>Logic.Business.LaytonDocomoTool</RootNamespace>
+	<AssemblyName>Logic.Business.LaytonDocomoTool</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\LaytonDocomoTool\CrossCutting.Core.Contract\CrossCutting.Core.Contract.csproj" />
+    <ProjectReference Include="..\Logic.Business.LaytonDocomoTool.Contract\Logic.Business.LaytonDocomoTool.Contract.csproj" />
+    <ProjectReference Include="..\Logic.Domain.CodeAnalysis.Contract\Logic.Domain.CodeAnalysis.Contract.csproj" />
+    <ProjectReference Include="..\Logic.Domain.Level5Management.Docomo.Contract\Logic.Domain.Level5Management.Docomo.Contract.csproj" />
+  </ItemGroup>
+
+</Project>

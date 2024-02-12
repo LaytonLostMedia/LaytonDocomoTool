@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LaytonDocomoExtractor": {
+      "commandName": "Project",
+      "commandLineArgs": "-o create -t jar -f D:\\Users\\Kirito\\Desktop\\Layton_Motdm\\data\\ch1\\tbl"
+    }
+  }
+}
