@@ -116,7 +116,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
         private IfExpressionSyntax ParseIfExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
         {
             SyntaxToken ifKeyword = ParseIfKeywordToken(buffer);
-            ExpressionSyntax expression = ParseExpression(buffer);
+            ExpressionSyntax expression = ParseCompoundExpression(buffer);
 
             return new IfExpressionSyntax(ifKeyword, expression);
         }
@@ -152,6 +152,19 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
             }
 
             return new CommaSeparatedSyntaxList<ExpressionSyntax>(result.ToArray());
+        }
+
+        private ExpressionSyntax ParseCompoundExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            ExpressionSyntax leftExpression = ParseExpression(buffer);
+
+            if (!HasTokenKind(buffer, Level5DocomoTokenKind.AndKeyword))
+                return leftExpression;
+
+            SyntaxToken andToken = ParseAndKeywordToken(buffer);
+            ExpressionSyntax rightExpression = ParseCompoundExpression(buffer);
+
+            return new BinaryExpressionSyntax(leftExpression, andToken, rightExpression);
         }
 
         private ExpressionSyntax ParseExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
@@ -301,6 +314,11 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
         private SyntaxToken ParseNotKeywordToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
         {
             return CreateToken(buffer, Level5DocomoTokenKind.NotKeyword);
+        }
+
+        private SyntaxToken ParseAndKeywordToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            return CreateToken(buffer, Level5DocomoTokenKind.AndKeyword);
         }
 
         private SyntaxToken ParseTrueKeywordToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)

@@ -34,9 +34,11 @@ namespace Logic.Business.LaytonDocomoTool
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ExtractJarWorkflow))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ExtractTableWorkflow))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ExtractScriptWorkflow))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ExtractResourceWorkflow))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(InjectJarWorkflow))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CreateScriptWorkflow))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CreateTableWorkflow))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CreateResourceWorkflow))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties, typeof(LaytonDocomoExtractorConfiguration))]
         public void Register(ICoCoKernel kernel)
         {
@@ -49,9 +51,12 @@ namespace Logic.Business.LaytonDocomoTool
             kernel.Register<IExtractJarWorkflow, ExtractJarWorkflow>(ActivationScope.Unique);
             kernel.Register<IExtractTableWorkflow, ExtractTableWorkflow>(ActivationScope.Unique);
             kernel.Register<IExtractScriptWorkflow, ExtractScriptWorkflow>(ActivationScope.Unique);
+            kernel.Register<IExtractResourceWorkflow, ExtractResourceWorkflow>(ActivationScope.Unique);
+
             kernel.Register<ICreateScriptWorkflow, CreateScriptWorkflow>(ActivationScope.Unique);
             kernel.Register<ICreateTableWorkflow, CreateTableWorkflow>(ActivationScope.Unique);
             kernel.Register<IInjectJarWorkflow, InjectJarWorkflow>(ActivationScope.Unique);
+            kernel.Register<ICreateResourceWorkflow, CreateResourceWorkflow>(ActivationScope.Unique);
 
             kernel.RegisterConfiguration<LaytonDocomoExtractorConfiguration>();
         }

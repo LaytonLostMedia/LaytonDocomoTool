@@ -6,11 +6,6 @@ namespace Logic.Domain.Level5Management.Docomo.Script
 {
     internal class ScriptComposer : IScriptComposer
     {
-        public ScriptComposer()
-        {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        }
-
         public EventEntryData[] Compose(EventData[] events)
         {
             var result = new List<EventEntryData>();
@@ -22,12 +17,32 @@ namespace Logic.Domain.Level5Management.Docomo.Script
 
         private void Compose(EventData[] events, IList<EventEntryData> entries)
         {
+            var conditionCount = 0;
             for (var i = 0; i < events.Length;)
             {
                 EventEntryData composedEventEntry = ComposeEntry(events[i]);
                 composedEventEntry.identifier = composedEventEntry.identifier.PadRight(10);
 
+                if (events[i] is EndIfEventData endIfData)
+                {
+                    for (int j = conditionCount - 1; j >= 1; j--)
+                        entries.Add(ComposeEndIfEntry(endIfData.Id + j));
+                }
+
                 entries.Add(composedEventEntry);
+
+                if (events[i] is IfEventData ifData)
+                {
+                    conditionCount = ifData.Conditions.Length;
+
+                    for (var j = 1; j < conditionCount; j++)
+                        entries.Add(ComposeIfEntry(ifData.Id + j, ifData.Conditions[j]));
+                }
+                else if (events[i] is ElseEventData elseData)
+                {
+                    for (var j = 1; j < conditionCount; j++)
+                        entries.Add(ComposeElseEntry(elseData.Id + j));
+                }
 
                 if (events[i++] is BranchBlockEventData branchData)
                     Compose(branchData.Events, entries);
@@ -167,54 +182,16 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                     };
 
                 case ElseIfEventData elseIfData:
-                    return new EventEntryData
-                    {
-                        identifier = "elseif",
-                        dataSize = 5,
-                        data = new[]
-                        {
-                            elseIfData.Id,
-                            (byte)(elseIfData.IsNegate ? 1 : 0),
-                            elseIfData.ComparisonType,
-                            (byte)elseIfData.ComparisonValue, (byte)(elseIfData.ComparisonValue >> 8)
-                        }
-                    };
+                    return ComposeElseIfEntry(elseIfData.Id, elseIfData.Conditions[0]);
 
                 case IfEventData ifData:
-                    return new EventEntryData
-                    {
-                        identifier = "if",
-                        dataSize = 5,
-                        data = new[]
-                        {
-                            ifData.Id,
-                            (byte)(ifData.IsNegate ? 1 : 0),
-                            ifData.ComparisonType,
-                            (byte)ifData.ComparisonValue, (byte)(ifData.ComparisonValue >> 8)
-                        }
-                    };
+                    return ComposeIfEntry(ifData.Id, ifData.Conditions[0]);
 
                 case ElseEventData elseData:
-                    return new EventEntryData
-                    {
-                        identifier = "else",
-                        dataSize = 1,
-                        data = new[]
-                        {
-                            elseData.Id
-                        }
-                    };
+                    return ComposeElseEntry(elseData.Id);
 
                 case EndIfEventData endIfData:
-                    return new EventEntryData
-                    {
-                        identifier = "endif",
-                        dataSize = 1,
-                        data = new[]
-                        {
-                            endIfData.Id
-                        }
-                    };
+                    return ComposeEndIfEntry(endIfData.Id);
 
                 case ChoiceEventData choiceData:
                     var choiceEntry = new EventEntryData
@@ -395,7 +372,7 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                     return new EventEntryData
                     {
                         identifier = "Shake",
-                        dataSize = 3,
+                        dataSize = 2,
                         data = new[]
                         {
                             shake.FrameCount,
@@ -937,6 +914,66 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                 default:
                     throw new InvalidOperationException($"Invalid event {eventData.GetType().Name}.");
             }
+        }
+
+        private EventEntryData ComposeIfEntry(int branchId, IfConditionData conditionData)
+        {
+            return ComposeConditionalEntry("if", branchId, conditionData);
+        }
+
+        private EventEntryData ComposeElseEntry(int branchId)
+        {
+            return new EventEntryData
+            {
+                identifier = "else".PadRight(10, ' '),
+                dataSize = 1,
+                data = new[] { (byte)branchId }
+            };
+        }
+
+        private EventEntryData ComposeElseIfEntry(int branchId, IfConditionData conditionData)
+        {
+            return ComposeConditionalEntry("elseif", branchId, conditionData);
+        }
+
+        private EventEntryData ComposeEndIfEntry(int branchId)
+        {
+            return new EventEntryData
+            {
+                identifier = "endif".PadRight(10, ' '),
+                dataSize = 1,
+                data = new[] { (byte)branchId }
+            };
+        }
+
+        private EventEntryData ComposeConditionalEntry(string identifier, int branchId, IfConditionData conditionData)
+        {
+            var ifEntry = new EventEntryData
+            {
+                identifier = identifier.PadRight(10, ' ')
+            };
+
+            var ifBytes = new List<byte>
+            {
+                (byte)branchId
+            };
+
+            ifBytes.AddRange(ComposeIfCondition(conditionData));
+
+            ifEntry.dataSize = (short)ifBytes.Count;
+            ifEntry.data = ifBytes.ToArray();
+
+            return ifEntry;
+        }
+
+        private byte[] ComposeIfCondition(IfConditionData conditionData)
+        {
+            return new[]
+            {
+                (byte)(conditionData.IsNegate ? 1 : 0),
+                conditionData.ComparisonType,
+                (byte)conditionData.ComparisonValue, (byte)(conditionData.ComparisonValue >> 8)
+            };
         }
     }
 }

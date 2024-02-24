@@ -12,5 +12,6 @@ namespace Logic.Business.LaytonDocomoTool.InternalContract
     public interface IExtractScriptWorkflow
     {
         void Work();
+        void Work(Stream scriptStream, string extractFilePath);
     }
 }

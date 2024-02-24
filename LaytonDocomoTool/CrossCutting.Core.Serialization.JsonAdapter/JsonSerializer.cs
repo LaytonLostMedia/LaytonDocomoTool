@@ -10,7 +10,7 @@ namespace CrossCutting.Core.Serialization.JsonAdapter
 {
     public class JsonSerializer : ISerializer
     {
-        public string Serialize<T>(T obj) => JsonConvert.SerializeObject(obj);
+        public string Serialize<T>(T obj) => JsonConvert.SerializeObject(obj, new JsonSerializerSettings { Formatting = Formatting.Indented });
 
         public T Deserialize<T>(string serializedText) => JsonConvert.DeserializeObject<T>(serializedText);
     }

@@ -28,7 +28,7 @@ namespace Logic.Business.LaytonDocomoTool
             if (string.IsNullOrWhiteSpace(config.Type))
                 throw new InvalidOperationException("No data type was given. Specify a data type by using the -t argument.");
 
-            if (config.Type != "jar" && config.Type != "table" && config.Type != "script")
+            if (config.Type != "jar" && config.Type != "table" && config.Type != "script" && config.Type != "resource")
                 throw new InvalidOperationException($"The data type '{config.Type}' is not valid. Use -h to see a list of valid data types.");
         }
 

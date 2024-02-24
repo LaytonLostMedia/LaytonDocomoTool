@@ -28,6 +28,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                 case Level5DocomoTokenKind.IfKeyword: return new("if", (int)kind);
                 case Level5DocomoTokenKind.ElseKeyword: return new("else", (int)kind);
                 case Level5DocomoTokenKind.NotKeyword: return new("not", (int)kind);
+                case Level5DocomoTokenKind.AndKeyword: return new("and", (int)kind);
                 default: throw new InvalidOperationException($"Cannot create simple token from kind {kind}. Use other methods instead.");
             }
         }

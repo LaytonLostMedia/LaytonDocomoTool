@@ -26,16 +26,21 @@ namespace Logic.Business.LaytonDocomoTool
 
         public void Work()
         {
-            string scriptText = File.ReadAllText(_config.FilePath);
+            string outputPath = Path.Combine(Path.GetDirectoryName(_config.FilePath)!, Path.GetFileNameWithoutExtension(_config.FilePath) + ".dat");
+            using Stream outputStream = File.Create(outputPath);
+
+            Work(_config.FilePath, outputStream);
+        }
+
+        public void Work(string scriptFilePath, Stream output)
+        {
+            string scriptText = File.ReadAllText(scriptFilePath);
 
             CodeUnitSyntax codeUnit = _scriptParser.ParseCodeUnit(scriptText);
             EventData[] events = _codeUnitConverter.CreateEvents(codeUnit);
             EventEntryData[] eventEntries = _scriptComposer.Compose(events);
 
-            string extractPath = Path.Combine(Path.GetDirectoryName(_config.FilePath)!, Path.GetFileNameWithoutExtension(_config.FilePath) + ".dat");
-            using Stream outputStream = File.Create(extractPath);
-
-            _scriptWriter.Write(eventEntries, outputStream);
+            _scriptWriter.Write(eventEntries, output);
         }
     }
 }

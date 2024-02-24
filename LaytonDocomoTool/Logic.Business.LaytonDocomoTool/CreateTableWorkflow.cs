@@ -1,10 +1,7 @@
 ﻿using Logic.Business.LaytonDocomoTool.InternalContract;
-using Logic.Domain.CodeAnalysis.Contract.Level5.Docomo.DataClasses;
-using Logic.Domain.Level5Management.Docomo.Contract;
 using Logic.Domain.Level5Management.Docomo.Contract.DataClasses;
-using Logic.Domain.Level5Management.Docomo.Contract.Script.DataClasses;
-using Logic.Domain.Level5Management.Docomo.Contract.Script;
-using Logic.Domain.CodeAnalysis.Contract.Level5.Docomo;
+using Logic.Domain.Level5Management.Docomo.Contract.Table;
+using Logic.Domain.Level5Management.Docomo.Contract.Table.DataClasses;
 
 namespace Logic.Business.LaytonDocomoTool
 {
@@ -12,23 +9,16 @@ namespace Logic.Business.LaytonDocomoTool
     {
         private readonly LaytonDocomoExtractorConfiguration _config;
         private readonly ITableWriter _tableWriter;
-        private readonly ILevel5DocomoParser _scriptParser;
-        private readonly ILevel5DocomoCodeUnitConverter _codeUnitConverter;
-        private readonly IScriptComposer _scriptComposer;
-        private readonly IScriptWriter _scriptWriter;
-        private readonly IResourceWriter _resourceWriter;
+        private readonly ICreateScriptWorkflow _createScriptWorkflow;
+        private readonly ICreateResourceWorkflow _createResourceWorkflow;
 
-        public CreateTableWorkflow(LaytonDocomoExtractorConfiguration config, ITableWriter tableWriter, ILevel5DocomoParser scriptParser,
-            ILevel5DocomoCodeUnitConverter codeUnitConverter, IScriptComposer scriptComposer, IScriptWriter scriptWriter,
-            IResourceWriter resourceWriter)
+        public CreateTableWorkflow(LaytonDocomoExtractorConfiguration config, ITableWriter tableWriter,
+            ICreateScriptWorkflow createScriptWorkflow, ICreateResourceWorkflow createResourceWorkflow)
         {
             _config = config;
             _tableWriter = tableWriter;
-            _scriptParser = scriptParser;
-            _codeUnitConverter = codeUnitConverter;
-            _scriptComposer = scriptComposer;
-            _scriptWriter = scriptWriter;
-            _resourceWriter = resourceWriter;
+            _createScriptWorkflow = createScriptWorkflow;
+            _createResourceWorkflow = createResourceWorkflow;
         }
 
         public void Work()
@@ -48,7 +38,7 @@ namespace Logic.Business.LaytonDocomoTool
         {
             TableData tableData = CreateTableData();
 
-            _tableWriter.Write(tableData, indexOutput, dataOutput);
+            _tableWriter.Write(tableData, dataOutput, indexOutput);
         }
 
         private TableData CreateTableData()
@@ -58,19 +48,10 @@ namespace Logic.Business.LaytonDocomoTool
                 Images = CreateTableEntries("img", "*.jpg"),
                 Animations = CreateTableEntries("gif", "*.gif"),
                 Melodies = CreateTableEntries("mld", "*.mld"),
-                Texts = CreateTableEntries("txt", "*.dat")
+                Texts = CreateTableEntries("txt", "*.dat"),
+                Scripts = CreateScriptEntries("scripts"),
+                Resources = CreateResourceEntries("res")
             };
-
-            if (_config.IsShallow)
-            {
-                result.Scripts = CreateTableEntries("scripts", "*.dat");
-                result.Resources = CreateTableEntries("res", "*.dat");
-            }
-            else
-            {
-                result.Scripts = CreateScriptEntries("scripts");
-                result.Resources = CreateResourceEntries("res");
-            }
 
             return result;
         }
@@ -94,46 +75,76 @@ namespace Logic.Business.LaytonDocomoTool
         private EntryData[] CreateScriptEntries(string subDir)
         {
             var result = new List<EntryData>();
+            var names = new HashSet<string>();
 
             foreach (string filePath in Directory.GetFiles(Path.Combine(_config.FilePath, subDir), "*.txt"))
             {
-                string scriptText = File.ReadAllText(filePath);
+                string name = Path.GetFileNameWithoutExtension(filePath) + ".dat";
 
+                names.Add(name);
                 result.Add(new EntryData
                 {
-                    Name = Path.GetFileNameWithoutExtension(filePath) + ".dat",
-                    Data = CreateScriptStream(scriptText)
+                    Name = name,
+                    Data = CreateScriptStream(filePath)
                 });
+            }
+
+            EntryData[] scriptEntries = CreateTableEntries("scripts", "*.dat");
+            foreach (EntryData resourceEntry in scriptEntries)
+            {
+                if (names.Contains(resourceEntry.Name))
+                    continue;
+
+                names.Add(resourceEntry.Name);
+                result.Add(resourceEntry);
             }
 
             return result.ToArray();
         }
 
-        private Stream CreateScriptStream(string scriptText)
+        private Stream CreateScriptStream(string scriptFilePath)
         {
-            CodeUnitSyntax codeUnit = _scriptParser.ParseCodeUnit(scriptText);
-            EventData[] events = _codeUnitConverter.CreateEvents(codeUnit);
-            EventEntryData[] eventEntries = _scriptComposer.Compose(events);
+            try
+            {
+                Stream outputStream = new MemoryStream();
 
-            Stream outputStream = new MemoryStream();
+                _createScriptWorkflow.Work(scriptFilePath, outputStream);
 
-            _scriptWriter.Write(eventEntries, outputStream);
-
-            outputStream.Position = 0;
-            return outputStream;
+                outputStream.Position = 0;
+                return outputStream;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error processing script file {scriptFilePath}.");
+                throw e;
+            }
         }
 
         private EntryData[] CreateResourceEntries(string subDir)
         {
             var result = new List<EntryData>();
+            var names = new HashSet<string>();
 
             foreach (string directoryPath in Directory.GetDirectories(Path.Combine(_config.FilePath, subDir), "*", SearchOption.TopDirectoryOnly))
             {
+                string name = Path.GetFileName(directoryPath) + ".dat";
+
+                names.Add(name);
                 result.Add(new EntryData
                 {
-                    Name = Path.GetFileName(directoryPath) + ".dat",
+                    Name = name,
                     Data = CreateResourceStream(directoryPath)
                 });
+            }
+
+            EntryData[] resourceEntries = CreateTableEntries("res", "*.dat");
+            foreach (EntryData resourceEntry in resourceEntries)
+            {
+                if (names.Contains(resourceEntry.Name))
+                    continue;
+
+                names.Add(resourceEntry.Name);
+                result.Add(resourceEntry);
             }
 
             return result.ToArray();
@@ -141,23 +152,20 @@ namespace Logic.Business.LaytonDocomoTool
 
         private Stream CreateResourceStream(string resourceDir)
         {
-            var result = new List<EntryData>();
-
-            foreach (string filePath in Directory.GetFiles(resourceDir, "*", SearchOption.AllDirectories))
+            try
             {
-                result.Add(new EntryData
-                {
-                    Name = Path.GetFileName(filePath),
-                    Data = File.OpenRead(filePath)
-                });
+                Stream outputStream = new MemoryStream();
+
+                _createResourceWorkflow.Work(resourceDir, outputStream);
+
+                outputStream.Position = 0;
+                return outputStream;
             }
-
-            Stream outputStream = new MemoryStream();
-
-            _resourceWriter.Write(result.ToArray(), outputStream);
-
-            outputStream.Position = 0;
-            return outputStream;
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error processing resource directory {resourceDir}.");
+                throw e;
+            }
         }
     }
 }

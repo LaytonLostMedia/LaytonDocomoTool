@@ -50,10 +50,15 @@ namespace Logic.Business.LaytonDocomoTool
 
         private void AddIfElseStatement(IfElseStatementSyntax ifElseStatement, IList<EventData> events, ref int blockId)
         {
-            int localBlockId = blockId++;
+            int localBlockId = blockId;
 
-            var ifEventData = new IfEventData { Id = (byte)localBlockId };
-            AddIfExpression(ifElseStatement.If, ifEventData);
+            var ifEventData = new IfEventData
+            {
+                Id = (byte)localBlockId,
+                Conditions = Array.Empty<IfConditionData>()
+            };
+            AddIfCondition(ifElseStatement.If.CompareExpression, ifEventData);
+            blockId += ifEventData.Conditions.Length;
 
             var ifEvents = new List<EventData>();
             foreach (StatementSyntax statement in ifElseStatement.Block.Statements)
@@ -67,8 +72,13 @@ namespace Logic.Business.LaytonDocomoTool
             {
                 if (elseStatement is ElseIfStatementSyntax elseIfStatement)
                 {
-                    var elseIfEventData = new ElseIfEventData { Id = (byte)localBlockId };
-                    AddIfExpression(elseIfStatement.If, elseIfEventData);
+                    var elseIfEventData = new ElseIfEventData
+                    {
+                        Id = (byte)localBlockId,
+                        Conditions = Array.Empty<IfConditionData>()
+                    };
+                    AddIfCondition(elseIfStatement.If.CompareExpression, elseIfEventData);
+                    blockId += elseIfEventData.Conditions.Length - 1;
 
                     var elseIfEvents = new List<EventData>();
                     foreach (StatementSyntax statement in elseIfStatement.Block.Statements)
@@ -95,30 +105,49 @@ namespace Logic.Business.LaytonDocomoTool
             events.Add(new EndIfEventData { Id = (byte)localBlockId });
         }
 
-        private void AddIfExpression(IfExpressionSyntax ifExpression, IfEventData ifEventData)
+        private void AddIfCondition(ExpressionSyntax ifExpression, ConditionalBranchBlockEventData conditionalBranchData)
         {
-            ExpressionSyntax compareExpression = ifExpression.CompareExpression;
+            if (ifExpression is BinaryExpressionSyntax compoundExpression)
+            {
+                AddIfCondition(compoundExpression.Left, conditionalBranchData);
+                AddIfCondition(compoundExpression.Right, conditionalBranchData);
 
-            if (compareExpression is UnaryExpressionSyntax unaryExpression)
+                return;
+            }
+
+            IfConditionData[] conditions = conditionalBranchData.Conditions;
+            Array.Resize(ref conditions, conditions.Length + 1);
+
+            conditions[^1] = CreateIfCondition(ifExpression);
+            conditionalBranchData.Conditions = conditions;
+        }
+
+        private IfConditionData CreateIfCondition(ExpressionSyntax comparisonExpression)
+        {
+            var result = new IfConditionData();
+
+            if (comparisonExpression is UnaryExpressionSyntax unaryExpression)
             {
                 if ((Level5DocomoTokenKind)unaryExpression.Operation.RawKind != Level5DocomoTokenKind.NotKeyword)
                     throw new InvalidOperationException($"Invalid unary operation {(Level5DocomoTokenKind)unaryExpression.Operation.RawKind}.");
 
-                ifEventData.IsNegate = true;
+                result.IsNegate = true;
 
-                compareExpression = unaryExpression.Expression;
+                comparisonExpression = unaryExpression.Expression;
             }
 
-            if (compareExpression is not FunctionInvocationExpressionSyntax functionInvocation)
-                throw new InvalidOperationException($"Invalid if comparison expression {compareExpression.GetType().Name}.");
+            if (comparisonExpression is not FunctionInvocationExpressionSyntax functionInvocation)
+                throw new InvalidOperationException($"Invalid if comparison expression {comparisonExpression.GetType().Name}.");
 
             if (functionInvocation.ParameterList.Parameters.Elements.Count <= 0)
-                throw new InvalidOperationException($"Not enough parameters in if comparison expression {compareExpression.GetType().Name}.");
+                throw new InvalidOperationException($"Not enough parameters in if comparison expression {comparisonExpression.GetType().Name}.");
 
             string functionName = GetName(functionInvocation.Name);
 
-            ifEventData.ComparisonType = GetComparisonType(functionName);
-            ifEventData.ComparisonValue = GetValue<short>(functionInvocation.ParameterList.Parameters.Elements[0]);
+            result.ComparisonType = GetComparisonType(functionName);
+            result.ComparisonValue = GetValue<short>(functionInvocation.ParameterList.Parameters.Elements[0]);
+
+            return result;
         }
 
         private void AddFunctionInvocationExpression(FunctionInvocationExpressionSyntax functionInvocation, IList<EventData> events)

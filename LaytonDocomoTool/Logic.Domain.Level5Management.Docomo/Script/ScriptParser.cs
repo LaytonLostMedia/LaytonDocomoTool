@@ -22,41 +22,151 @@ namespace Logic.Domain.Level5Management.Docomo.Script
 
         public EventData[] Parse(EventEntryData[] entries)
         {
+            EventData[] parsedEntries = entries.Select(ParseEntry).ToArray();
+
+            var index = 0;
+            return Parse(parsedEntries, ref index);
+        }
+
+        private EventData[] Parse(EventData[] entries, ref int index, int branchId = -1)
+        {
             var result = new List<EventData>();
 
-            for (var i = 0; i < entries.Length;)
+            int startActiveBranchId = -1;
+            int endActiveBranchId = -1;
+            for (; index < entries.Length;)
             {
-                EventData parsedEvent = ParseEntry(entries[i++]);
+                EventData parsedEvent = entries[index];
+
+                if (parsedEvent is BranchEventData branchData)
+                {
+                    if (branchData.Id == branchId)
+                        break;
+
+                    if (branchData is not IfEventData && branchData.Id != branchId && branchData.Id != startActiveBranchId && branchData.Id != endActiveBranchId)
+                        throw new InvalidOperationException($"Inconsistent branch ID {branchData.Id}.");
+                }
+
+                index++;
+
+                if (parsedEvent is IfEventData ifData)
+                    startActiveBranchId = endActiveBranchId = ifData.Id;
+
+                if (parsedEvent is BranchBlockEventData blockData)
+                {
+                    // If next branch part cannot be found, ignore this branch instruction
+                    int nextBranchIndex = GetNextBranchIndex(entries, index, blockData.Id);
+                    if (nextBranchIndex == -1)
+                        continue;
+
+                    if (entries[nextBranchIndex] is ElseEventData)
+                    {
+                        // If branch instruction is part of a compound expression
+                        int compoundDepth = GetElseCompoundDepth(entries, nextBranchIndex, out endActiveBranchId);
+
+                        // Collect if conditions for compound branch instruction
+                        if (parsedEvent is ConditionalBranchBlockEventData parsedConditionalBranchData)
+                        {
+                            for (var i = 0; i < compoundDepth - 1; i++)
+                            {
+                                if (entries[index + i] is not ConditionalBranchBlockEventData conditionalBranchData)
+                                    break;
+
+                                IfConditionData[] conditions = parsedConditionalBranchData.Conditions;
+                                Array.Resize(ref conditions, parsedConditionalBranchData.Conditions.Length + 1);
+
+                                conditions[^1] = conditionalBranchData.Conditions[0];
+                                parsedConditionalBranchData.Conditions = conditions;
+                            }
+                        }
+
+                        index += compoundDepth - 1;
+
+                        blockData.Events = Parse(entries, ref index, blockData.Id);
+                    }
+                    else
+                    {
+                        int compoundDepth = GetEndCompoundDepth(entries, nextBranchIndex, endActiveBranchId);
+                        nextBranchIndex -= compoundDepth - 1;
+                        index += compoundDepth - 1;
+
+                        blockData.Events = Parse(entries, ref index, ((BranchEventData)entries[nextBranchIndex]).Id);
+
+                        index += compoundDepth - 1;
+                    }
+                }
 
                 result.Add(parsedEvent);
-
-                if (parsedEvent is BranchBlockEventData branchData)
-                    branchData.Events = ParseBranch(entries, ref i, branchData.Id);
             }
 
             return result.ToArray();
         }
 
-        private EventData[] ParseBranch(EventEntryData[] entries, ref int index, int branchId)
+        private int GetElseCompoundDepth(EventData[] entries, int nextBranchIndex, out int lastBranchId)
         {
-            var result = new List<EventData>();
+            var branchData = (BranchEventData)entries[nextBranchIndex];
+            lastBranchId = branchData.Id;
 
-            for (; index < entries.Length;)
+            if (branchData is ElseEventData)
             {
-                EventData parsedEvent = ParseEntry(entries[index]);
+                var depth = 1;
+                for (int i = nextBranchIndex + 1; i < entries.Length; i++)
+                {
+                    if (entries[i] is not ElseEventData elseData)
+                        break;
 
-                if (parsedEvent is BranchEventData branchData && branchData.Id == branchId)
-                    break;
+                    lastBranchId = elseData.Id;
 
-                index++;
+                    depth++;
+                }
 
-                result.Add(parsedEvent);
-
-                if (parsedEvent is BranchBlockEventData blockData)
-                    blockData.Events = ParseBranch(entries, ref index, blockData.Id);
+                return depth;
             }
 
-            return result.ToArray();
+            return 1;
+        }
+
+        private int GetEndCompoundDepth(EventData[] entries, int nextBranchIndex, int endBranchId)
+        {
+            var branchData = (BranchEventData)entries[nextBranchIndex];
+
+            if (branchData is EndIfEventData endIfData)
+            {
+                if (endIfData.Id == endBranchId)
+                    return 1;
+
+                var depth = 1;
+                for (int i = nextBranchIndex - 1; i >= 0; i--)
+                {
+                    if (entries[i] is not EndIfEventData endIfData2)
+                        break;
+
+                    depth++;
+
+                    if (endIfData2.Id == endBranchId)
+                        break;
+                }
+
+                return depth;
+            }
+
+            return 1;
+        }
+
+        private int GetNextBranchIndex(EventData[] entries, int index, int branchId)
+        {
+            for (int i = index; i < entries.Length; i++)
+            {
+                switch (entries[i])
+                {
+                    case ElseIfEventData elseIfData when elseIfData.Id == branchId:
+                    case ElseEventData elseData when elseData.Id == branchId:
+                    case EndIfEventData endIfData when endIfData.Id == branchId:
+                        return i;
+                }
+            }
+
+            return -1;
         }
 
         private EventData ParseEntry(EventEntryData entry)
@@ -145,18 +255,30 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                     return new IfEventData
                     {
                         Id = entry.data[0],
-                        IsNegate = entry.data[1] == 1,
-                        ComparisonType = entry.data[2],
-                        ComparisonValue = (short)(entry.data[3] | (entry.data[4] << 8))
+                        Conditions = new[]
+                        {
+                            new IfConditionData
+                            {
+                                IsNegate = entry.data[1] == 1,
+                                ComparisonType = entry.data[2],
+                                ComparisonValue = (short)(entry.data[3] | (entry.data[4] << 8))
+                            }
+                        }
                     };
 
                 case "elseif":
                     return new ElseIfEventData
                     {
                         Id = entry.data[0],
-                        IsNegate = entry.data[1] == 1,
-                        ComparisonType = entry.data[2],
-                        ComparisonValue = (short)(entry.data[3] | (entry.data[4] << 8))
+                        Conditions = new[]
+                        {
+                            new IfConditionData
+                            {
+                                IsNegate = entry.data[1] == 1,
+                                ComparisonType = entry.data[2],
+                                ComparisonValue = (short)(entry.data[3] | (entry.data[4] << 8))
+                            }
+                        }
                     };
 
                 case "else":

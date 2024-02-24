@@ -27,6 +27,7 @@ namespace Logic.Domain.CodeAnalysis.Contract.Level5.Docomo.DataClasses
         IfKeyword,
         ElseKeyword,
         NotKeyword,
+        AndKeyword,
 
         Trivia,
 

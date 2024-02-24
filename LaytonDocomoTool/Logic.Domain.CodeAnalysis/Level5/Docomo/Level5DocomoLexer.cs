@@ -48,6 +48,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                 case '"':
                     return ReadStringLiteral();
 
+                case '-':
                 case '0':
                 case '1':
                 case '2':
@@ -380,6 +381,9 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
 
                 case "not":
                     return new(Level5DocomoTokenKind.NotKeyword, position, line, column, finalValue);
+
+                case "and":
+                    return new(Level5DocomoTokenKind.AndKeyword, position, line, column, finalValue);
 
                 default:
                     return new(Level5DocomoTokenKind.Identifier, position, line, column, finalValue);

@@ -1,4 +1,4 @@
-﻿using Logic.Domain.Level5Management.Docomo.Contract.DataClasses;
+﻿using Logic.Domain.Level5Management.Docomo.Contract.Table.DataClasses;
 
 namespace Logic.Business.LaytonDocomoTool.InternalContract
 {

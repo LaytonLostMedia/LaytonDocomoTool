@@ -113,7 +113,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
         {
             bool shouldLineBreak = ctx.ShouldLineBreak;
 
-            SyntaxToken elseToken = elseIfStatement.Else.WithNoTrivia().WithLeadingTrivia(" ");
+            SyntaxToken elseToken = elseIfStatement.Else.WithNoTrivia().WithTrailingTrivia(" ");
 
             if (ctx is { ShouldIndent: true, Indent: > 0 })
                 elseToken = elseToken.WithLeadingTrivia(new string('\t', ctx.Indent));
@@ -204,6 +204,10 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                     NormalizeUnaryExpression(unaryExpression, ctx);
                     break;
 
+                case BinaryExpressionSyntax binaryExpression:
+                    NormalizeBinaryExpression(binaryExpression, ctx);
+                    break;
+
                 case ArrayInitializerExpressionSyntax arrayInitializer:
                     NormalizeArrayInitializerExpression(arrayInitializer, ctx);
                     break;
@@ -243,6 +247,23 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
             NormalizeExpression(unary.Expression, ctx);
 
             unary.SetOperation(operation);
+        }
+
+        private void NormalizeBinaryExpression(BinaryExpressionSyntax binary, WhitespaceNormalizeContext ctx)
+        {
+            bool shouldLineBreak = ctx.ShouldLineBreak;
+
+            SyntaxToken operation = binary.Operation.WithLeadingTrivia(" ").WithTrailingTrivia(" ");
+
+            ctx.IsFirstElement = false;
+            ctx.ShouldIndent = false;
+            ctx.ShouldLineBreak = false;
+            NormalizeExpression(binary.Left, ctx);
+
+            ctx.ShouldLineBreak = shouldLineBreak;
+            NormalizeExpression(binary.Right, ctx);
+
+            binary.SetOperation(operation);
         }
 
         private void NormalizeArrayInitializerExpression(ArrayInitializerExpressionSyntax arrayInitializer, WhitespaceNormalizeContext ctx)

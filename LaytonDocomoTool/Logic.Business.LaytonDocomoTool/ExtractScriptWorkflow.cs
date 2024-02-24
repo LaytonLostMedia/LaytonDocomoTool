@@ -29,9 +29,15 @@ namespace Logic.Business.LaytonDocomoTool
             using Stream fileStream = File.OpenRead(_config.FilePath);
 
             string extractPath = Path.Combine(Path.GetDirectoryName(_config.FilePath)!, Path.GetFileNameWithoutExtension(_config.FilePath) + ".txt");
-            using StreamWriter scriptWriter = File.CreateText(extractPath);
 
-            EventData[] events = _scriptParser.Parse(fileStream);
+            Work(fileStream, extractPath);
+        }
+
+        public void Work(Stream scriptStream, string extractFilePath)
+        {
+            using StreamWriter scriptWriter = File.CreateText(extractFilePath);
+
+            EventData[] events = _scriptParser.Parse(scriptStream);
 
             CodeUnitSyntax codeUnit = _scriptConverter.CreateCodeUnit(events);
             _whitespaceNormalizer.NormalizeCodeUnit(codeUnit);

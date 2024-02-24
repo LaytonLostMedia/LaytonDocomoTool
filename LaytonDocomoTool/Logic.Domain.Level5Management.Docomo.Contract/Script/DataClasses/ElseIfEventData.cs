@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Logic.Domain.Level5Management.Docomo.Contract.Script.DataClasses
 {
-    public class ElseIfEventData : IfEventData
+    public sealed class ElseIfEventData : ConditionalBranchBlockEventData
     {
     }
 }

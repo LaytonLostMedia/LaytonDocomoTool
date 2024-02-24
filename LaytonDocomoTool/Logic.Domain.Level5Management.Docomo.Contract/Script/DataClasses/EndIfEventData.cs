@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Logic.Domain.Level5Management.Docomo.Contract.Script.DataClasses
 {
-    public class EndIfEventData : BranchEventData
+    public sealed class EndIfEventData : BranchEventData
     {
     }
 }

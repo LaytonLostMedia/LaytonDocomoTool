@@ -1,8 +1,11 @@
+using System.Text;
 using CrossCutting.Core.Contract.DependencyInjection;
 using CrossCutting.Core.Contract.EventBrokerage;
 using CrossCutting.Core.Contract.Messages;
 using LaytonDocomoTool;
 using Logic.Business.LaytonDocomoTool.Contract;
+
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 KernelLoader loader = new();
 ICoCoKernel kernel = loader.Initialize();

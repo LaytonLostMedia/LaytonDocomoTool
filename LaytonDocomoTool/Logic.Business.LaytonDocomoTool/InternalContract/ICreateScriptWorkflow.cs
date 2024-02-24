@@ -12,5 +12,6 @@ namespace Logic.Business.LaytonDocomoTool.InternalContract
     public interface ICreateScriptWorkflow
     {
         void Work();
+        void Work(string scriptFilePath, Stream output);
     }
 }

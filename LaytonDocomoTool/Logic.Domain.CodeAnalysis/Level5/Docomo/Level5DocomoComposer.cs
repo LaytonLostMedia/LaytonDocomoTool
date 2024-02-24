@@ -2,7 +2,6 @@
 using Logic.Domain.CodeAnalysis.Contract.Level5.Docomo;
 using Logic.Domain.CodeAnalysis.Contract.Level5.Docomo.DataClasses;
 using Logic.Domain.CodeAnalysis.Contract.DataClasses;
-using Logic.Domain.CodeAnalysis.Contract;
 
 namespace Logic.Domain.CodeAnalysis.Level5.Docomo
 {
@@ -139,6 +138,10 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                     ComposeUnaryExpression(unaryExpression, sb);
                     break;
 
+                case BinaryExpressionSyntax binaryExpression:
+                    ComposeBinaryExpression(binaryExpression, sb);
+                    break;
+
                 case ArrayInitializerExpressionSyntax arrayInitializer:
                     ComposeArrayInitializerExpression(arrayInitializer, sb);
                     break;
@@ -165,6 +168,13 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
         {
             ComposeSyntaxToken(unary.Operation, sb);
             ComposeExpression(unary.Expression, sb);
+        }
+
+        private void ComposeBinaryExpression(BinaryExpressionSyntax binary, StringBuilder sb)
+        {
+            ComposeExpression(binary.Left, sb);
+            ComposeSyntaxToken(binary.Operation, sb);
+            ComposeExpression(binary.Right, sb);
         }
 
         private void ComposeArrayInitializerExpression(ArrayInitializerExpressionSyntax arrayInitializer, StringBuilder sb)

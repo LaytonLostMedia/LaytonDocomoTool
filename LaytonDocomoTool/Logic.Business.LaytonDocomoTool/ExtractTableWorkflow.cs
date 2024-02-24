@@ -1,33 +1,24 @@
 ﻿using Logic.Business.LaytonDocomoTool.InternalContract;
-using Logic.Domain.CodeAnalysis.Contract.Level5.Docomo.DataClasses;
 using Logic.Domain.Level5Management.Docomo.Contract.DataClasses;
-using Logic.Domain.Level5Management.Docomo.Contract.Script.DataClasses;
-using Logic.Domain.Level5Management.Docomo.Contract.Script;
-using Logic.Domain.CodeAnalysis.Contract.Level5.Docomo;
-using Logic.Domain.Level5Management.Docomo.Contract;
+using Logic.Domain.Level5Management.Docomo.Contract.Table;
+using Logic.Domain.Level5Management.Docomo.Contract.Table.DataClasses;
 
 namespace Logic.Business.LaytonDocomoTool
 {
     internal class ExtractTableWorkflow : IExtractTableWorkflow
     {
         private readonly LaytonDocomoExtractorConfiguration _config;
-        private readonly ITableReader _tableReader;
-        private readonly IScriptParser _scriptParser;
-        private readonly IResourceReader _resourceReader;
-        private readonly ILevel5DocomoEventDataConverter _scriptConverter;
-        private readonly ILevel5DocomoWhitespaceNormalizer _whitespaceNormalizer;
-        private readonly ILevel5DocomoComposer _scriptComposer;
+        private readonly ITableParser _tableReader;
+        private readonly IExtractScriptWorkflow _extractScriptWorkflow;
+        private readonly IExtractResourceWorkflow _extractResourceWorkflow;
 
-        public ExtractTableWorkflow(LaytonDocomoExtractorConfiguration config, ITableReader tableReader, IScriptParser scriptParser, IResourceReader resourceReader,
-            ILevel5DocomoEventDataConverter scriptConverter, ILevel5DocomoWhitespaceNormalizer whitespaceNormalizer, ILevel5DocomoComposer scriptComposer)
+        public ExtractTableWorkflow(LaytonDocomoExtractorConfiguration config, ITableParser tableReader,
+            IExtractScriptWorkflow extractScriptWorkflow, IExtractResourceWorkflow extractResourceWorkflow)
         {
             _config = config;
             _tableReader = tableReader;
-            _resourceReader = resourceReader;
-            _scriptParser = scriptParser;
-            _scriptConverter = scriptConverter;
-            _whitespaceNormalizer = whitespaceNormalizer;
-            _scriptComposer = scriptComposer;
+            _extractScriptWorkflow = extractScriptWorkflow;
+            _extractResourceWorkflow = extractResourceWorkflow;
         }
 
         public void Work()
@@ -51,7 +42,7 @@ namespace Logic.Business.LaytonDocomoTool
             using Stream indexStream = File.OpenRead(indexFilePath);
             using Stream dataStream = File.OpenRead(dataFilePath);
 
-            TableData table = _tableReader.Read(indexStream, dataStream);
+            TableData table = _tableReader.Parse(indexStream, dataStream);
 
             Work(table, extractDir);
         }
@@ -97,16 +88,20 @@ namespace Logic.Business.LaytonDocomoTool
             foreach (EntryData entry in entries)
             {
                 string extractPath = Path.Combine(extractDir, Path.GetFileNameWithoutExtension(entry.Name) + ".txt");
-                using StreamWriter scriptWriter = File.CreateText(extractPath);
 
-                EventData[] events = _scriptParser.Parse(entry.Data);
+                try
+                {
+                    _extractScriptWorkflow.Work(entry.Data, extractPath);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Error further extracting script file {entry.Name}: {e.Message}");
 
-                CodeUnitSyntax codeUnit = _scriptConverter.CreateCodeUnit(events);
-                _whitespaceNormalizer.NormalizeCodeUnit(codeUnit);
+                    using Stream extractStream = File.Create(Path.Combine(extractDir, entry.Name));
 
-                string readableScript = _scriptComposer.ComposeCodeUnit(codeUnit);
-
-                scriptWriter.Write(readableScript);
+                    entry.Data.Position = 0;
+                    entry.Data.CopyTo(extractStream);
+                }
             }
         }
 
@@ -116,20 +111,18 @@ namespace Logic.Business.LaytonDocomoTool
             {
                 string extractDir = Path.Combine(baseDir, subDir, Path.GetFileNameWithoutExtension(entry.Name));
 
-                EntryData[] resourceEntries = _resourceReader.ReadEntries(entry.Data);
-
-                foreach (EntryData resourceEntry in resourceEntries)
+                try
                 {
-                    string resourceDir = extractDir;
-                    if (Path.GetExtension(resourceEntry.Name) is ".jpg" or ".gif" or ".mld")
-                        resourceDir = Path.Combine(resourceDir, "res");
+                    _extractResourceWorkflow.Work(entry.Data, extractDir);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Error further extracting resource file {entry.Name}: {e.Message}");
 
-                    Directory.CreateDirectory(resourceDir);
+                    using Stream extractStream = File.Create(Path.Combine(baseDir, subDir, entry.Name));
 
-                    string resourcePath = Path.Combine(resourceDir, resourceEntry.Name);
-
-                    using Stream imageStream = File.Create(resourcePath);
-                    resourceEntry.Data.CopyTo(imageStream);
+                    entry.Data.Position = 0;
+                    entry.Data.CopyTo(extractStream);
                 }
             }
         }
