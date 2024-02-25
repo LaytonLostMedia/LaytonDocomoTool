@@ -116,7 +116,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
         private IfExpressionSyntax ParseIfExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
         {
             SyntaxToken ifKeyword = ParseIfKeywordToken(buffer);
-            ExpressionSyntax expression = ParseCompoundExpression(buffer);
+            ExpressionSyntax expression = ParseLogicalExpression(buffer);
 
             return new IfExpressionSyntax(ifKeyword, expression);
         }
@@ -154,49 +154,82 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
             return new CommaSeparatedSyntaxList<ExpressionSyntax>(result.ToArray());
         }
 
-        private ExpressionSyntax ParseCompoundExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        private ExpressionSyntax ParseLogicalExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
         {
             ExpressionSyntax leftExpression = ParseExpression(buffer);
 
-            if (!HasTokenKind(buffer, Level5DocomoTokenKind.AndKeyword))
+            if (!IsLogicalExpression(buffer))
                 return leftExpression;
 
-            SyntaxToken andToken = ParseAndKeywordToken(buffer);
-            ExpressionSyntax rightExpression = ParseCompoundExpression(buffer);
+            return ParseLogicalExpression(buffer, leftExpression);
+        }
 
-            return new BinaryExpressionSyntax(leftExpression, andToken, rightExpression);
+        private LogicalExpressionSyntax ParseLogicalExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer, ExpressionSyntax left)
+        {
+            if (HasTokenKind(buffer, Level5DocomoTokenKind.AndKeyword))
+                return new LogicalExpressionSyntax(left, ParseAndKeywordToken(buffer), ParseLogicalExpression(buffer));
+
+            throw CreateException(buffer, "Invalid logical expression.", Level5DocomoTokenKind.AndKeyword);
         }
 
         private ExpressionSyntax ParseExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
         {
+            ExpressionSyntax? left = null;
+
             if (HasTokenKind(buffer, Level5DocomoTokenKind.StringLiteral))
-                return ParseStringLiteralExpression(buffer);
+                left = ParseStringLiteralExpression(buffer);
 
-            if (HasTokenKind(buffer, Level5DocomoTokenKind.NumericLiteral))
-                return ParseNumericLiteralExpression(buffer);
+            else if (HasTokenKind(buffer, Level5DocomoTokenKind.NumericLiteral))
+                left = ParseNumericLiteralExpression(buffer);
 
-            if (HasTokenKind(buffer, Level5DocomoTokenKind.NotKeyword))
-                return ParseUnaryNotExpression(buffer);
+            else if (IsUnaryExpression(buffer))
+                left = ParseUnaryExpression(buffer);
 
-            if (HasTokenKind(buffer, Level5DocomoTokenKind.BracketOpen))
-                return ParseArrayInitializerExpression(buffer);
+            else if (HasTokenKind(buffer, Level5DocomoTokenKind.BracketOpen))
+                left = ParseArrayInitializerExpression(buffer);
 
-            if (HasTokenKind(buffer, Level5DocomoTokenKind.TrueKeyword))
-                return ParseTrueLiteralExpression(buffer);
+            else if (HasTokenKind(buffer, Level5DocomoTokenKind.TrueKeyword))
+                left = ParseTrueLiteralExpression(buffer);
 
-            if (HasTokenKind(buffer, Level5DocomoTokenKind.FalseKeyword))
-                return ParseFalseLiteralExpression(buffer);
+            else if (HasTokenKind(buffer, Level5DocomoTokenKind.FalseKeyword))
+                left = ParseFalseLiteralExpression(buffer);
 
-            if (HasTokenKind(buffer, Level5DocomoTokenKind.Identifier))
+            else if (HasTokenKind(buffer, Level5DocomoTokenKind.Identifier))
             {
                 if (HasTokenKind(buffer, 1, Level5DocomoTokenKind.ParenOpen))
-                    return ParseFunctionInvocationExpression(buffer);
-
-                return ParseName(buffer);
+                    left = ParseFunctionInvocationExpression(buffer);
+                else
+                    left = ParseName(buffer);
             }
 
-            throw CreateException(buffer, "Invalid expression.", Level5DocomoTokenKind.StringLiteral, Level5DocomoTokenKind.NumericLiteral,
-                Level5DocomoTokenKind.NotKeyword, Level5DocomoTokenKind.BracketOpen, Level5DocomoTokenKind.Identifier);
+            if (left == null)
+                throw CreateException(buffer, "Invalid expression.", Level5DocomoTokenKind.StringLiteral, Level5DocomoTokenKind.NumericLiteral,
+                    Level5DocomoTokenKind.NotKeyword, Level5DocomoTokenKind.BracketOpen, Level5DocomoTokenKind.Identifier);
+
+            if (IsBinaryExpression(buffer))
+                return ParseBinaryExpression(buffer, left);
+
+            return left;
+        }
+
+        private bool IsLogicalExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            return HasTokenKind(buffer, Level5DocomoTokenKind.AndKeyword);
+        }
+
+        private bool IsUnaryExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            return HasTokenKind(buffer, Level5DocomoTokenKind.NotKeyword);
+        }
+
+        private bool IsBinaryExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            return HasTokenKind(buffer, Level5DocomoTokenKind.NotEquals) ||
+                   HasTokenKind(buffer, Level5DocomoTokenKind.EqualsEquals) ||
+                   HasTokenKind(buffer, Level5DocomoTokenKind.SmallerThan) ||
+                   HasTokenKind(buffer, Level5DocomoTokenKind.SmallerEquals) ||
+                   HasTokenKind(buffer, Level5DocomoTokenKind.GreaterThan) ||
+                   HasTokenKind(buffer, Level5DocomoTokenKind.GreaterEquals);
         }
 
         private LiteralExpressionSyntax ParseStringLiteralExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
@@ -227,6 +260,14 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
             return new LiteralExpressionSyntax(literal);
         }
 
+        private UnaryExpressionSyntax ParseUnaryExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            if (HasTokenKind(buffer, Level5DocomoTokenKind.NotKeyword))
+                return ParseUnaryNotExpression(buffer);
+
+            throw CreateException(buffer, "Invalid unary expression.", Level5DocomoTokenKind.NotKeyword);
+        }
+
         private UnaryExpressionSyntax ParseUnaryNotExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
         {
             SyntaxToken notKeyword = ParseNotKeywordToken(buffer);
@@ -249,6 +290,31 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
             SyntaxToken identifier = ParseIdentifierToken(buffer);
 
             return new SimpleNameSyntax(identifier);
+        }
+
+        private BinaryExpressionSyntax ParseBinaryExpression(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer, ExpressionSyntax leftExpression)
+        {
+            if (HasTokenKind(buffer, Level5DocomoTokenKind.EqualsEquals))
+                return new BinaryExpressionSyntax(leftExpression, ParseEqualsEqualsToken(buffer), ParseExpression(buffer));
+
+            if (HasTokenKind(buffer, Level5DocomoTokenKind.NotEquals))
+                return new BinaryExpressionSyntax(leftExpression, ParseNotEqualsToken(buffer), ParseExpression(buffer));
+
+            if (HasTokenKind(buffer, Level5DocomoTokenKind.SmallerThan))
+                return new BinaryExpressionSyntax(leftExpression, ParseSmallerThanToken(buffer), ParseExpression(buffer));
+
+            if (HasTokenKind(buffer, Level5DocomoTokenKind.SmallerEquals))
+                return new BinaryExpressionSyntax(leftExpression, ParseSmallerEqualsToken(buffer), ParseExpression(buffer));
+
+            if (HasTokenKind(buffer, Level5DocomoTokenKind.GreaterThan))
+                return new BinaryExpressionSyntax(leftExpression, ParseGreaterThanToken(buffer), ParseExpression(buffer));
+
+            if (HasTokenKind(buffer, Level5DocomoTokenKind.GreaterEquals))
+                return new BinaryExpressionSyntax(leftExpression, ParseGreaterEqualsToken(buffer), ParseExpression(buffer));
+
+            throw CreateException(buffer, "Invalid binary expression.", Level5DocomoTokenKind.EqualsEquals, Level5DocomoTokenKind.NotEquals,
+                Level5DocomoTokenKind.SmallerThan, Level5DocomoTokenKind.SmallerEquals, Level5DocomoTokenKind.GreaterThan, 
+                Level5DocomoTokenKind.GreaterEquals);
         }
 
         private SyntaxToken ParseParenOpenToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
@@ -284,6 +350,36 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
         private SyntaxToken ParseSemicolonToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
         {
             return CreateToken(buffer, Level5DocomoTokenKind.Semicolon);
+        }
+
+        private SyntaxToken ParseEqualsEqualsToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            return CreateToken(buffer, Level5DocomoTokenKind.EqualsEquals);
+        }
+
+        private SyntaxToken ParseNotEqualsToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            return CreateToken(buffer, Level5DocomoTokenKind.NotEquals);
+        }
+
+        private SyntaxToken ParseSmallerThanToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            return CreateToken(buffer, Level5DocomoTokenKind.SmallerThan);
+        }
+
+        private SyntaxToken ParseSmallerEqualsToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            return CreateToken(buffer, Level5DocomoTokenKind.SmallerEquals);
+        }
+
+        private SyntaxToken ParseGreaterThanToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            return CreateToken(buffer, Level5DocomoTokenKind.GreaterThan);
+        }
+
+        private SyntaxToken ParseGreaterEqualsToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)
+        {
+            return CreateToken(buffer, Level5DocomoTokenKind.GreaterEquals);
         }
 
         private SyntaxToken ParseIdentifierToken(IBuffer<LexerToken<Level5DocomoTokenKind>> buffer)

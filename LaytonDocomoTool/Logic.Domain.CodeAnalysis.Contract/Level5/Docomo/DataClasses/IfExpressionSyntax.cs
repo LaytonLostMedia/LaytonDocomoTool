@@ -10,17 +10,17 @@ namespace Logic.Domain.CodeAnalysis.Contract.Level5.Docomo.DataClasses
     public class IfExpressionSyntax : ExpressionSyntax
     {
         public SyntaxToken If { get; private set; }
-        public ExpressionSyntax CompareExpression { get; set; }
+        public ExpressionSyntax ConditionExpression { get; set; }
 
-        public override Location Location => new(If.FullLocation.Position, CompareExpression.Location.EndPosition);
+        public override Location Location => new(If.FullLocation.Position, ConditionExpression.Location.EndPosition);
 
-        public IfExpressionSyntax(SyntaxToken ifToken, ExpressionSyntax compare)
+        public IfExpressionSyntax(SyntaxToken ifToken, ExpressionSyntax condition)
         {
             ifToken.Parent = this;
-            compare.Parent = this;
+            condition.Parent = this;
 
             If = ifToken;
-            CompareExpression = compare;
+            ConditionExpression = condition;
         }
 
         public void SetIf(SyntaxToken ifToken, bool updatePositions = true)
@@ -37,7 +37,7 @@ namespace Logic.Domain.CodeAnalysis.Contract.Level5.Docomo.DataClasses
             SyntaxToken ifToken = If;
 
             position = ifToken.UpdatePosition(position);
-            position = CompareExpression.UpdatePosition(position);
+            position = ConditionExpression.UpdatePosition(position);
 
             If = ifToken;
 

@@ -97,17 +97,13 @@ namespace Logic.Business.LaytonDocomoTool
 
         private ExpressionSyntax CreateConditionExpression(ConditionalBranchBlockEventData conditionalBranchData)
         {
-            ExpressionSyntax leftExpression = CreateFunctionInvocationExpression(conditionalBranchData.Conditions[0]);
-            if (conditionalBranchData.Conditions[0].IsNegate)
-                leftExpression = CreateNotUnaryExpression(leftExpression);
+            ExpressionSyntax leftExpression = CreateIfConditionExpression(conditionalBranchData.Conditions[0]);
 
             for (var i = 1; i < conditionalBranchData.Conditions.Length; i++)
             {
-                ExpressionSyntax rightExpression = CreateFunctionInvocationExpression(conditionalBranchData.Conditions[i]);
-                if (conditionalBranchData.Conditions[i].IsNegate)
-                    rightExpression = CreateNotUnaryExpression(rightExpression);
+                ExpressionSyntax rightExpression = CreateIfConditionExpression(conditionalBranchData.Conditions[i]);
 
-                leftExpression = CreateAndBinaryExpression(leftExpression, rightExpression);
+                leftExpression = CreateAndLogicalExpression(leftExpression, rightExpression);
             }
 
             return leftExpression;
@@ -141,11 +137,11 @@ namespace Logic.Business.LaytonDocomoTool
             return new UnaryExpressionSyntax(notToken, expression);
         }
 
-        private BinaryExpressionSyntax CreateAndBinaryExpression(ExpressionSyntax leftExpression, ExpressionSyntax rightExpression)
+        private LogicalExpressionSyntax CreateAndLogicalExpression(ExpressionSyntax leftExpression, ExpressionSyntax rightExpression)
         {
             SyntaxToken andToken = _syntaxFactory.Token(Level5DocomoTokenKind.AndKeyword);
 
-            return new BinaryExpressionSyntax(leftExpression, andToken, rightExpression);
+            return new LogicalExpressionSyntax(leftExpression, andToken, rightExpression);
         }
 
         private FunctionInvocationStatementSyntax CreateFunctionInvocationStatement(EventData eventData)
@@ -164,12 +160,61 @@ namespace Logic.Business.LaytonDocomoTool
             return new FunctionInvocationExpressionSyntax(simpleName, functionParameters);
         }
 
-        private FunctionInvocationExpressionSyntax CreateFunctionInvocationExpression(IfConditionData conditionData)
+        private ExpressionSyntax CreateIfConditionExpression(IfConditionData conditionData)
         {
-            NameSyntax simpleName = CreateFunctionName(conditionData);
-            FunctionParametersSyntax functionParameters = CreateFunctionParameters(conditionData);
+            var indexName = new SimpleNameSyntax(_syntaxFactory.Identifier("MemoIndex"));
+            ExpressionSyntax valueExpression = CreateValueExpression(conditionData.ComparisonValue);
 
-            return new FunctionInvocationExpressionSyntax(simpleName, functionParameters);
+            ExpressionSyntax conditionExpression;
+            var applyNotCondition = true;
+
+            switch (conditionData.ComparisonType)
+            {
+                case 0:
+                    SyntaxToken equalsToken = conditionData.IsNegate ?
+                        _syntaxFactory.Token(Level5DocomoTokenKind.NotEquals) :
+                        _syntaxFactory.Token(Level5DocomoTokenKind.EqualsEquals);
+
+                    conditionExpression = new BinaryExpressionSyntax(indexName, equalsToken, valueExpression);
+                    applyNotCondition = false;
+                    break;
+
+                case 1:
+                    SyntaxToken smallerToken = _syntaxFactory.Token(Level5DocomoTokenKind.SmallerThan);
+
+                    conditionExpression = new BinaryExpressionSyntax(indexName, smallerToken, valueExpression);
+                    break;
+
+                case 2:
+                    SyntaxToken greaterToken = _syntaxFactory.Token(Level5DocomoTokenKind.GreaterThan);
+
+                    conditionExpression = new BinaryExpressionSyntax(indexName, greaterToken, valueExpression);
+                    break;
+
+                case 3:
+                    SyntaxToken smallerEqualsToken = _syntaxFactory.Token(Level5DocomoTokenKind.SmallerEquals);
+
+                    conditionExpression = new BinaryExpressionSyntax(indexName, smallerEqualsToken, valueExpression);
+                    break;
+
+                case 4:
+                    SyntaxToken greaterEqualsToken = _syntaxFactory.Token(Level5DocomoTokenKind.GreaterEquals);
+
+                    conditionExpression = new BinaryExpressionSyntax(indexName, greaterEqualsToken, valueExpression);
+                    break;
+
+                default:
+                    NameSyntax simpleName = CreateFunctionName(conditionData);
+                    FunctionParametersSyntax functionParameters = CreateFunctionParameters(conditionData);
+
+                    conditionExpression = new FunctionInvocationExpressionSyntax(simpleName, functionParameters);
+                    break;
+            }
+
+            if (applyNotCondition && conditionData.IsNegate)
+                conditionExpression = CreateNotUnaryExpression(conditionExpression);
+
+            return conditionExpression;
         }
 
         private FunctionParametersSyntax CreateFunctionParameters(EventData eventData)
@@ -188,7 +233,22 @@ namespace Logic.Business.LaytonDocomoTool
             SyntaxToken parenClose = _syntaxFactory.Token(Level5DocomoTokenKind.ParenClose);
 
             ExpressionSyntax compareValueExpression = CreateValueExpression(conditionData.ComparisonValue);
-            var parameters = new CommaSeparatedSyntaxList<ExpressionSyntax>(new[] { compareValueExpression });
+            CommaSeparatedSyntaxList<ExpressionSyntax> parameters;
+
+            switch (conditionData.ComparisonType)
+            {
+                case 5 when conditionData.ComparisonValue is 0:
+                case 6 when conditionData.ComparisonValue is 0:
+                case 7:
+                case 8:
+                case 13:
+                    parameters = new CommaSeparatedSyntaxList<ExpressionSyntax>(Array.Empty<ExpressionSyntax>());
+                    break;
+
+                default:
+                    parameters = new CommaSeparatedSyntaxList<ExpressionSyntax>(new[] { compareValueExpression });
+                    break;
+            }
 
             return new FunctionParametersSyntax(parenOpen, parameters, parenClose);
         }
@@ -373,6 +433,45 @@ namespace Logic.Business.LaytonDocomoTool
         private NameSyntax CreateFunctionName(IfConditionData conditionData)
         {
             var name = $"Compare{conditionData.ComparisonType}";
+
+            switch (conditionData.ComparisonType)
+            {
+                case 5:
+                    name = conditionData.ComparisonValue == 0 ? "IsCurrentPuzzleEncountered" : "IsPuzzleEncountered";
+                    break;
+
+                case 6:
+                    name = conditionData.ComparisonValue == 0 ? "IsCurrentPuzzleSolved" : "IsPuzzleSolved";
+                    break;
+
+                case 7:
+                    name = "IsPlayerInEvent";
+                    break;
+
+                case 8:
+                    name = "IsPlayerInPuzzle";
+                    break;
+
+                case 9:
+                    name = "HasPlayerPuzzlesSolved";
+                    break;
+
+                case 12:
+                    name = "IsBitSet";
+                    break;
+
+                case 13:
+                    name = "IsPlayerEnteringRoom";
+                    break;
+
+                case 14:
+                    name = "IsStorySet";
+                    break;
+
+                case 16:
+                    name = "IsPlayerInRoom";
+                    break;
+            }
 
             SyntaxToken identifier = _syntaxFactory.Identifier(name);
 

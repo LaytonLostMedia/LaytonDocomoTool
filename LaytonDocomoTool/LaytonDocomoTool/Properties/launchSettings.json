@@ -2,7 +2,7 @@
   "profiles": {
     "LaytonDocomoExtractor": {
       "commandName": "Project",
-      "commandLineArgs": "-o create -t table -f D:\\Users\\Kirito\\Desktop\\Layton_Motdm\\data\\ch3\\tbl"
+      "commandLineArgs": "-o extract -t table -f D:\\Users\\Kirito\\Desktop\\Layton_Motdm\\data\\ch1\\new\\0.dat"
     }
   }
 }

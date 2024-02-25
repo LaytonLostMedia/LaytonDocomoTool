@@ -101,7 +101,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
         private void ComposeIfExpression(IfExpressionSyntax ifExpression, StringBuilder sb)
         {
             ComposeSyntaxToken(ifExpression.If, sb);
-            ComposeExpression(ifExpression.CompareExpression, sb);
+            ComposeExpression(ifExpression.ConditionExpression, sb);
         }
 
         private void ComposeBlockExpression(BlockExpressionSyntax block, StringBuilder sb)
@@ -138,6 +138,10 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                     ComposeUnaryExpression(unaryExpression, sb);
                     break;
 
+                case LogicalExpressionSyntax logicalExpression:
+                    ComposeLogicalExpression(logicalExpression, sb);
+                    break;
+
                 case BinaryExpressionSyntax binaryExpression:
                     ComposeBinaryExpression(binaryExpression, sb);
                     break;
@@ -168,6 +172,13 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
         {
             ComposeSyntaxToken(unary.Operation, sb);
             ComposeExpression(unary.Expression, sb);
+        }
+
+        private void ComposeLogicalExpression(LogicalExpressionSyntax logical, StringBuilder sb)
+        {
+            ComposeExpression(logical.Left, sb);
+            ComposeSyntaxToken(logical.Operation, sb);
+            ComposeExpression(logical.Right, sb);
         }
 
         private void ComposeBinaryExpression(BinaryExpressionSyntax binary, StringBuilder sb)

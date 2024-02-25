@@ -57,7 +57,7 @@ namespace Logic.Business.LaytonDocomoTool
                 Id = (byte)localBlockId,
                 Conditions = Array.Empty<IfConditionData>()
             };
-            AddIfCondition(ifElseStatement.If.CompareExpression, ifEventData);
+            AddIfCondition(ifElseStatement.If.ConditionExpression, ifEventData);
             blockId += ifEventData.Conditions.Length;
 
             var ifEvents = new List<EventData>();
@@ -77,7 +77,7 @@ namespace Logic.Business.LaytonDocomoTool
                         Id = (byte)localBlockId,
                         Conditions = Array.Empty<IfConditionData>()
                     };
-                    AddIfCondition(elseIfStatement.If.CompareExpression, elseIfEventData);
+                    AddIfCondition(elseIfStatement.If.ConditionExpression, elseIfEventData);
                     blockId += elseIfEventData.Conditions.Length - 1;
 
                     var elseIfEvents = new List<EventData>();
@@ -107,7 +107,7 @@ namespace Logic.Business.LaytonDocomoTool
 
         private void AddIfCondition(ExpressionSyntax ifExpression, ConditionalBranchBlockEventData conditionalBranchData)
         {
-            if (ifExpression is BinaryExpressionSyntax compoundExpression)
+            if (ifExpression is LogicalExpressionSyntax compoundExpression)
             {
                 AddIfCondition(compoundExpression.Left, conditionalBranchData);
                 AddIfCondition(compoundExpression.Right, conditionalBranchData);
@@ -124,30 +124,78 @@ namespace Logic.Business.LaytonDocomoTool
 
         private IfConditionData CreateIfCondition(ExpressionSyntax comparisonExpression)
         {
-            var result = new IfConditionData();
+            var result = new IfConditionData
+            {
+                IsNegate = IsConditionNegated(comparisonExpression)
+            };
 
             if (comparisonExpression is UnaryExpressionSyntax unaryExpression)
-            {
-                if ((Level5DocomoTokenKind)unaryExpression.Operation.RawKind != Level5DocomoTokenKind.NotKeyword)
-                    throw new InvalidOperationException($"Invalid unary operation {(Level5DocomoTokenKind)unaryExpression.Operation.RawKind}.");
-
-                result.IsNegate = true;
-
                 comparisonExpression = unaryExpression.Expression;
-            }
 
-            if (comparisonExpression is not FunctionInvocationExpressionSyntax functionInvocation)
-                throw new InvalidOperationException($"Invalid if comparison expression {comparisonExpression.GetType().Name}.");
-
-            if (functionInvocation.ParameterList.Parameters.Elements.Count <= 0)
-                throw new InvalidOperationException($"Not enough parameters in if comparison expression {comparisonExpression.GetType().Name}.");
-
-            string functionName = GetName(functionInvocation.Name);
-
-            result.ComparisonType = GetComparisonType(functionName);
-            result.ComparisonValue = GetValue<short>(functionInvocation.ParameterList.Parameters.Elements[0]);
+            result.ComparisonType = GetComparisonType(comparisonExpression);
+            result.ComparisonValue = GetComparisonValue(comparisonExpression);
 
             return result;
+        }
+
+        private bool IsConditionNegated(ExpressionSyntax expression)
+        {
+            switch (expression)
+            {
+                case UnaryExpressionSyntax unaryExpression when (Level5DocomoTokenKind)unaryExpression.Operation.RawKind == Level5DocomoTokenKind.NotKeyword:
+                case BinaryExpressionSyntax binaryExpression when (Level5DocomoTokenKind)binaryExpression.Operation.RawKind == Level5DocomoTokenKind.NotEquals:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        private byte GetComparisonType(ExpressionSyntax expression)
+        {
+            if (expression is FunctionInvocationExpressionSyntax functionInvocation)
+                return GetComparisonType(GetName(functionInvocation.Name));
+
+            if (expression is not BinaryExpressionSyntax binaryExpression)
+                throw new InvalidOperationException($"Invalid expression {expression.GetType().Name} for if condition.");
+
+            switch ((Level5DocomoTokenKind)binaryExpression.Operation.RawKind)
+            {
+                case Level5DocomoTokenKind.EqualsEquals:
+                case Level5DocomoTokenKind.NotEquals:
+                    return 0;
+
+                case Level5DocomoTokenKind.SmallerThan:
+                    return 1;
+
+                case Level5DocomoTokenKind.GreaterThan:
+                    return 2;
+
+                case Level5DocomoTokenKind.SmallerEquals:
+                    return 3;
+
+                case Level5DocomoTokenKind.GreaterEquals:
+                    return 4;
+
+                default:
+                    throw new InvalidOperationException($"Invalid binary expression {(Level5DocomoTokenKind)binaryExpression.Operation.RawKind} for if condition.");
+            }
+        }
+
+        private short GetComparisonValue(ExpressionSyntax expression)
+        {
+            if (expression is FunctionInvocationExpressionSyntax functionInvocation)
+            {
+                if (functionInvocation.ParameterList.Parameters.Elements.Count <= 0)
+                    return 0;
+
+                return GetValue<short>(functionInvocation.ParameterList.Parameters.Elements[0]);
+            }
+
+            if (expression is not BinaryExpressionSyntax binaryExpression)
+                throw new InvalidOperationException($"Invalid expression {expression.GetType().Name} for if condition.");
+
+            return GetValue<short>(binaryExpression.Right);
         }
 
         private void AddFunctionInvocationExpression(FunctionInvocationExpressionSyntax functionInvocation, IList<EventData> events)
@@ -279,7 +327,38 @@ namespace Logic.Business.LaytonDocomoTool
 
         private byte GetComparisonType(string name)
         {
-            if (!name.ToLower().StartsWith("compare", StringComparison.InvariantCulture))
+            if (name.Equals("IsCurrentPuzzleEncountered", StringComparison.InvariantCultureIgnoreCase) ||
+                name.Equals("IsPuzzleEncountered", StringComparison.InvariantCultureIgnoreCase))
+                return 5;
+
+            if (name.Equals("IsCurrentPuzzleSolved", StringComparison.InvariantCultureIgnoreCase) ||
+                name.Equals("IsPuzzleSolved", StringComparison.InvariantCultureIgnoreCase))
+                return 6;
+
+            if (name.Equals("IsPlayerInEvent", StringComparison.InvariantCultureIgnoreCase))
+                return 7;
+
+            if (name.Equals("IsPlayerInPuzzle", StringComparison.InvariantCultureIgnoreCase))
+                return 8;
+
+            if (name.Equals("HasPlayerPuzzlesSolved", StringComparison.InvariantCultureIgnoreCase))
+                return 9;
+
+            if (name.Equals("IsBitSet", StringComparison.InvariantCultureIgnoreCase))
+                return 12;
+
+            if (name.Equals("IsPlayerEnteringRoom", StringComparison.InvariantCultureIgnoreCase))
+                return 13;
+
+            if (name.Equals("IsStorySet", StringComparison.InvariantCultureIgnoreCase))
+                return 14;
+
+            if (name.Equals("IsPlayerInRoom", StringComparison.InvariantCultureIgnoreCase))
+                return 16;
+
+            // 0,1,2,3,4,10,11,15
+
+            if (!name.StartsWith("Compare", StringComparison.InvariantCultureIgnoreCase))
                 throw new InvalidOperationException($"Invalid comparison {name}.");
 
             if (!byte.TryParse(name[7..], out byte comparisonType))

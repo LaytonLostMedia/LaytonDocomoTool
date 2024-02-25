@@ -23,6 +23,12 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                 case Level5DocomoTokenKind.CurlyClose: return new("}", (int)kind);
                 case Level5DocomoTokenKind.Comma: return new(",", (int)kind);
                 case Level5DocomoTokenKind.Semicolon: return new(";", (int)kind);
+                case Level5DocomoTokenKind.EqualsEquals: return new("==", (int)kind);
+                case Level5DocomoTokenKind.NotEquals: return new("!=", (int)kind);
+                case Level5DocomoTokenKind.SmallerThan: return new("<", (int)kind);
+                case Level5DocomoTokenKind.GreaterThan: return new(">", (int)kind);
+                case Level5DocomoTokenKind.SmallerEquals: return new("<=", (int)kind);
+                case Level5DocomoTokenKind.GreaterEquals: return new(">=", (int)kind);
                 case Level5DocomoTokenKind.TrueKeyword: return new("true", (int)kind);
                 case Level5DocomoTokenKind.FalseKeyword: return new("false", (int)kind);
                 case Level5DocomoTokenKind.IfKeyword: return new("if", (int)kind);

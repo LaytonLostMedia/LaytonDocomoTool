@@ -73,6 +73,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
             if (ctx.ShouldLineBreak)
                 parenClose = parenClose.WithTrailingTrivia("\r\n");
 
+            ctx.ShouldLineBreak = false;
             NormalizeCommaSeparatedList(functionParameters.Parameters, ctx);
 
             functionParameters.SetParenOpen(parenOpen, false);
@@ -151,7 +152,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
             ctx.ShouldIndent = false;
             ctx.IsFirstElement = true;
             ctx.ShouldLineBreak = true;
-            NormalizeExpression(ifExpression.CompareExpression, ctx);
+            NormalizeExpression(ifExpression.ConditionExpression, ctx);
 
             ifExpression.SetIf(ifToken, false);
         }
@@ -204,6 +205,10 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                     NormalizeUnaryExpression(unaryExpression, ctx);
                     break;
 
+                case LogicalExpressionSyntax logicalExpression:
+                    NormalizeLogicalExpression(logicalExpression, ctx);
+                    break;
+
                 case BinaryExpressionSyntax binaryExpression:
                     NormalizeBinaryExpression(binaryExpression, ctx);
                     break;
@@ -231,6 +236,8 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
 
             if (!ctx.IsFirstElement)
                 newLiteral = newLiteral.WithLeadingTrivia(" ");
+            if (ctx.ShouldLineBreak)
+                newLiteral = newLiteral.WithTrailingTrivia("\r\n");
 
             literal.SetLiteral(newLiteral);
         }
@@ -239,14 +246,29 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
         {
             SyntaxToken operation = unary.Operation.WithNoTrivia().WithTrailingTrivia(" ");
 
-            if (!ctx.IsFirstElement)
-                operation = operation.WithLeadingTrivia(" ");
-
             ctx.IsFirstElement = false;
             ctx.ShouldIndent = false;
             NormalizeExpression(unary.Expression, ctx);
 
             unary.SetOperation(operation);
+        }
+
+        private void NormalizeLogicalExpression(LogicalExpressionSyntax logical, WhitespaceNormalizeContext ctx)
+        {
+            bool shouldLineBreak = ctx.ShouldLineBreak;
+
+            SyntaxToken operation = logical.Operation.WithLeadingTrivia(" ").WithTrailingTrivia(" ");
+
+            ctx.IsFirstElement = false;
+            ctx.ShouldIndent = false;
+            ctx.ShouldLineBreak = false;
+            NormalizeExpression(logical.Left, ctx);
+
+            ctx.IsFirstElement = true;
+            ctx.ShouldLineBreak = shouldLineBreak;
+            NormalizeExpression(logical.Right, ctx);
+
+            logical.SetOperation(operation);
         }
 
         private void NormalizeBinaryExpression(BinaryExpressionSyntax binary, WhitespaceNormalizeContext ctx)
@@ -260,6 +282,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
             ctx.ShouldLineBreak = false;
             NormalizeExpression(binary.Left, ctx);
 
+            ctx.IsFirstElement = true;
             ctx.ShouldLineBreak = shouldLineBreak;
             NormalizeExpression(binary.Right, ctx);
 
@@ -275,7 +298,10 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                 bracketOpen = bracketOpen.WithLeadingTrivia(" ");
 
             if (arrayInitializer.Values != null)
+            {
+                ctx.ShouldLineBreak = false;
                 NormalizeCommaSeparatedList(arrayInitializer.Values, ctx);
+            }
 
             arrayInitializer.SetBracketOpen(bracketOpen, false);
             arrayInitializer.SetBracketClose(bracketClose, false);

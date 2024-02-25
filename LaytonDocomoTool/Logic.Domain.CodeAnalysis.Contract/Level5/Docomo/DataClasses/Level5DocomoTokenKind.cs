@@ -17,6 +17,12 @@ namespace Logic.Domain.CodeAnalysis.Contract.Level5.Docomo.DataClasses
 
         Comma,
         Semicolon,
+        EqualsEquals,
+        NotEquals,
+        SmallerThan,
+        GreaterThan,
+        SmallerEquals,
+        GreaterEquals,
 
         Identifier,
         NumericLiteral,

@@ -16,6 +16,8 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
 
         public override LexerToken<Level5DocomoTokenKind> Read()
         {
+            char nextCharacter;
+
             if (!TryPeekChar(out char character))
                 return new(Level5DocomoTokenKind.EndOfFile, Position, Line, Column);
 
@@ -38,6 +40,30 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                     return new(Level5DocomoTokenKind.BracketOpen, Position, Line, Column, $"{ReadChar()}");
                 case ']':
                     return new(Level5DocomoTokenKind.BracketClose, Position, Line, Column, $"{ReadChar()}");
+
+                case '=':
+                    if (!TryPeekChar(1, out nextCharacter) || nextCharacter != '=')
+                        break;
+
+                    return new(Level5DocomoTokenKind.EqualsEquals, Position, Line, Column, $"{ReadChar()}{ReadChar()}");
+
+                case '!':
+                    if (!TryPeekChar(1, out nextCharacter) || nextCharacter != '=')
+                        break;
+
+                    return new(Level5DocomoTokenKind.NotEquals, Position, Line, Column, $"{ReadChar()}{ReadChar()}");
+
+                case '<':
+                    if (!TryPeekChar(1, out nextCharacter) || nextCharacter != '=')
+                        return new(Level5DocomoTokenKind.SmallerThan, Position, Line, Column, $"{ReadChar()}");
+
+                    return new(Level5DocomoTokenKind.SmallerEquals, Position, Line, Column, $"{ReadChar()}{ReadChar()}");
+
+                case '>':
+                    if (!TryPeekChar(1, out nextCharacter) || nextCharacter != '=')
+                        return new(Level5DocomoTokenKind.GreaterThan, Position, Line, Column, $"{ReadChar()}");
+
+                    return new(Level5DocomoTokenKind.GreaterEquals, Position, Line, Column, $"{ReadChar()}{ReadChar()}");
 
                 case ' ':
                 case '\t':
