@@ -11,14 +11,18 @@ namespace Logic.Business.LaytonDocomoTool
         private readonly IExtractTableWorkflow _extractTableWorkflow;
         private readonly IExtractScriptWorkflow _extractScriptWorkflow;
         private readonly IExtractResourceWorkflow _extractResourceWorkflow;
+        private readonly IExtractMelodyWorkflow _extractMelodyWorkflow;
         private readonly IInjectJarWorkflow _injectJarWorkflow;
         private readonly ICreateTableWorkflow _createTableWorkflow;
         private readonly ICreateScriptWorkflow _createScriptWorkflow;
         private readonly ICreateResourceWorkflow _createResourceWorkflow;
+        private readonly ICreateMelodyWorkflow _createMelodyWorkflow;
 
         public LaytonDocomoToolManagement(LaytonDocomoExtractorConfiguration config, IConfigurationValidator configValidator,
-            IExtractJarWorkflow extractJarWorkflow, IExtractTableWorkflow extractTableWorkflow, IExtractScriptWorkflow extractScriptWorkflow, IExtractResourceWorkflow extractResourceWorkflow,
-            IInjectJarWorkflow injectJarWorkflow, ICreateTableWorkflow createTableWorkflow, ICreateScriptWorkflow createScriptWorkflow, ICreateResourceWorkflow createResourceWorkflow)
+            IExtractJarWorkflow extractJarWorkflow, IExtractTableWorkflow extractTableWorkflow, IExtractScriptWorkflow extractScriptWorkflow,
+            IExtractResourceWorkflow extractResourceWorkflow, IExtractMelodyWorkflow extractMelodyWorkflow,
+            IInjectJarWorkflow injectJarWorkflow, ICreateTableWorkflow createTableWorkflow, ICreateScriptWorkflow createScriptWorkflow,
+            ICreateResourceWorkflow createResourceWorkflow, ICreateMelodyWorkflow createMelodyWorkflow)
         {
             _config = config;
             _configValidator = configValidator;
@@ -26,10 +30,12 @@ namespace Logic.Business.LaytonDocomoTool
             _extractTableWorkflow = extractTableWorkflow;
             _extractScriptWorkflow = extractScriptWorkflow;
             _extractResourceWorkflow = extractResourceWorkflow;
+            _extractMelodyWorkflow = extractMelodyWorkflow;
             _injectJarWorkflow = injectJarWorkflow;
             _createTableWorkflow = createTableWorkflow;
             _createScriptWorkflow = createScriptWorkflow;
             _createResourceWorkflow = createResourceWorkflow;
+            _createMelodyWorkflow = createMelodyWorkflow;
         }
 
         public int Execute()
@@ -95,6 +101,10 @@ namespace Logic.Business.LaytonDocomoTool
                 case "resource":
                     ExtractResource();
                     break;
+
+                case "melody":
+                    ExtractMelody();
+                    break;
             }
         }
 
@@ -116,6 +126,10 @@ namespace Logic.Business.LaytonDocomoTool
 
                 case "resource":
                     CreateResource();
+                    break;
+
+                case "melody":
+                    CreateMelody();
                     break;
             }
         }
@@ -168,6 +182,18 @@ namespace Logic.Business.LaytonDocomoTool
             }
         }
 
+        private void ExtractMelody()
+        {
+            try
+            {
+                _extractMelodyWorkflow.Work();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Could not extract melody: {GetInnermostException(e).Message}");
+            }
+        }
+
         private void InjectJar()
         {
             try
@@ -213,6 +239,18 @@ namespace Logic.Business.LaytonDocomoTool
             catch (Exception e)
             {
                 Console.WriteLine($"Could not create resource: {GetInnermostException(e).Message}");
+            }
+        }
+
+        private void CreateMelody()
+        {
+            try
+            {
+                _createMelodyWorkflow.Work();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Could not create melody: {GetInnermostException(e).Message}");
             }
         }
 

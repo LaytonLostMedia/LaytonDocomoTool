@@ -22,6 +22,7 @@
     <ProjectReference Include="..\Logic.Domain.DocomoManagement\Logic.Domain.DocomoManagement.csproj" />
     <ProjectReference Include="..\Logic.Domain.Kuriimu2.KomponentAdapter\Logic.Domain.Kuriimu2.KomponentAdapter.csproj" />
     <ProjectReference Include="..\Logic.Domain.Level5Management.Docomo\Logic.Domain.Level5Management.Docomo.csproj" />
+    <ProjectReference Include="..\Logic.Domain.MidiManagement\Logic.Domain.MidiManagement\Logic.Domain.MidiManagement.csproj" />
   </ItemGroup>
 
 </Project>

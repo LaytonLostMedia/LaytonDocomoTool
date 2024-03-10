@@ -22,6 +22,7 @@ using Logic.Domain.CodeAnalysis;
 using Logic.Domain.DocomoManagement;
 using Logic.Domain.Kuriimu2.KomponentAdapter;
 using Logic.Domain.Level5Management.Docomo;
+using Logic.Domain.MidiManagement;
 
 namespace Mappings.LaytonDocomoTool
 {
@@ -71,6 +72,7 @@ namespace Mappings.LaytonDocomoTool
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(DocomoManagementActivator))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Level5ManagementDocomoActivator))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CodeAnalysisActivator))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(MidiManagementActivator))]
         private void ActivateComponents(ICoCoKernel kernel)
         {
             // TODO: Add own components
@@ -79,6 +81,7 @@ namespace Mappings.LaytonDocomoTool
             kernel.RegisterComponent<DocomoManagementActivator>();
             kernel.RegisterComponent<Level5ManagementDocomoActivator>();
             kernel.RegisterComponent<CodeAnalysisActivator>();
+            kernel.RegisterComponent<MidiManagementActivator>();
         }
     }
 }

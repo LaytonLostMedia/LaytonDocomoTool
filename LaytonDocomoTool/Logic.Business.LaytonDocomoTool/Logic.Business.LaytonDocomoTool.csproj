@@ -17,6 +17,7 @@
     <ProjectReference Include="..\Logic.Business.LaytonDocomoTool.Contract\Logic.Business.LaytonDocomoTool.Contract.csproj" />
     <ProjectReference Include="..\Logic.Domain.CodeAnalysis.Contract\Logic.Domain.CodeAnalysis.Contract.csproj" />
     <ProjectReference Include="..\Logic.Domain.Level5Management.Docomo.Contract\Logic.Domain.Level5Management.Docomo.Contract.csproj" />
+    <ProjectReference Include="..\Logic.Domain.MidiManagement\Logic.Domain.MidiManagement.Contract\Logic.Domain.MidiManagement.Contract.csproj" />
   </ItemGroup>
 
 </Project>

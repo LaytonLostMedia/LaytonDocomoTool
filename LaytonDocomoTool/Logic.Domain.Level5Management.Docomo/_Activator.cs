@@ -10,7 +10,9 @@ using Logic.Domain.Level5Management.Docomo.Script;
 using Logic.Domain.Level5Management.Docomo.Contract.Table;
 using Logic.Domain.Level5Management.Docomo.Table;
 using Logic.Domain.Level5Management.Docomo.Contract.Resource;
+using Logic.Domain.Level5Management.Docomo.Melody;
 using Logic.Domain.Level5Management.Docomo.Resource;
+using Logic.Domain.Level5Management.Docomo.Contract.Melody;
 
 namespace Logic.Domain.Level5Management.Docomo
 {
@@ -45,6 +47,8 @@ namespace Logic.Domain.Level5Management.Docomo
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ScriptParser))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ScriptComposer))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ScriptWriter))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(MelodyReader))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(MelodyParser))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Level5ManagementDocomoConfiguration))]
         public void Register(ICoCoKernel kernel)
         {
@@ -64,6 +68,9 @@ namespace Logic.Domain.Level5Management.Docomo
             kernel.Register<IScriptParser, ScriptParser>(ActivationScope.Unique);
             kernel.Register<IScriptComposer, ScriptComposer>(ActivationScope.Unique);
             kernel.Register<IScriptWriter, ScriptWriter>(ActivationScope.Unique);
+
+            kernel.Register<IMelodyReader, MelodyReader>(ActivationScope.Unique);
+            kernel.Register<IMelodyParser, MelodyParser>(ActivationScope.Unique);
 
             kernel.RegisterConfiguration<Level5ManagementDocomoConfiguration>();
         }

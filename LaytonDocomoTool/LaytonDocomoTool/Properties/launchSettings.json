@@ -2,7 +2,7 @@
   "profiles": {
     "LaytonDocomoExtractor": {
       "commandName": "Project",
-      "commandLineArgs": "-o extract -t table -f D:\\Users\\Kirito\\Desktop\\Layton_Motdm\\data\\ch1\\new\\0.dat"
+      "commandLineArgs": "-o extract -t melody -f D:\\Users\\Kirito\\Desktop\\Layton_Motdm\\data\\ch1\\tbl\\mld\\se_011.mld"
     }
   }
 }
