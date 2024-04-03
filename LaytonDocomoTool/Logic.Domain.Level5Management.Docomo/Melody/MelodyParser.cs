@@ -178,8 +178,8 @@ namespace Logic.Domain.Level5Management.Docomo.Melody
         {
             var noteEvent = new MelodyTrackNoteEventData
             {
-                Voice = status >> 6,
-                Key = status & 0x3F
+                Channel = status >> 6,
+                Note = status & 0x3F
             };
 
             if (metaData.NoteValue is 1)
@@ -274,70 +274,70 @@ namespace Logic.Domain.Level5Management.Docomo.Melody
                         case 0:
                             return new MelodyTrackInstrumentLowPartEventData
                             {
-                                Part = part >> 6,
+                                Channel = part >> 6,
                                 Instrument = part & 0x3F
                             };
 
                         case 1:
                             return new MelodyTrackInstrumentHighPartEventData
                             {
-                                Part = part >> 6,
+                                Channel = part >> 6,
                                 Instrument = part & 0x1
                             };
 
                         case 2:
                             return new MelodyTrackVolumeEventData
                             {
-                                Part = part >> 6,
+                                Channel = part >> 6,
                                 Volume = part & 0x3F
                             };
 
                         case 3:
                             return new MelodyTrackValanceEventData
                             {
-                                Part = part >> 6,
+                                Channel = part >> 6,
                                 Valance = part & 0x3F
                             };
 
                         case 4:
                             return new MelodyTrackPitchBendEventData
                             {
-                                Part = part >> 6,
+                                Channel = part >> 6,
                                 PitchBend = part & 0x3F
                             };
 
                         case 5:
                             return new MelodyTrackChannelAssignEventData
                             {
-                                Part = part >> 6,
-                                Channel = part & 0x3F
+                                Channel = part >> 6,
+                                ChannelAssign = part & 0x3F
                             };
 
                         case 6:
                             return new MelodyTrackVolumeChangeEventData
                             {
-                                Part = part >> 6,
-                                Volume = ((part & 0x3F) << 26) >> 26
+                                Channel = part >> 6,
+                                Volume = ((part & 0x3F) << 26) >> 26 // Sign extend
                             };
 
                         case 7:
                             return new MelodyTrackPitchBendRangeEventData
                             {
-                                Part = part >> 6,
+                                Channel = part >> 6,
                                 Range = part & 0x3F
                             };
 
                         case 9:
                             return new MelodyTrackMasterCoarseTuningEventData
                             {
-                                Part = part >> 6,
+                                Channel = part >> 6,
                                 Value = part & 0x3F
                             };
 
                         case 10:
                             return new MelodyTrackModulationEventData
                             {
-                                Part = part >> 6,
+                                Channel = part >> 6,
                                 Depth = part & 0x3F
                             };
 
@@ -356,7 +356,7 @@ namespace Logic.Domain.Level5Management.Docomo.Melody
 
                             return new MelodyTrackEditInstrumentEventData
                             {
-                                Part = (editPart >> 4) & 0x3,
+                                Channel = (editPart >> 4) & 0x3,
                                 Modulator = new EditInstrumentModulator
                                 {
                                     ML = modPart[0] >> 5,
@@ -394,7 +394,7 @@ namespace Logic.Domain.Level5Management.Docomo.Melody
 
                             return new MelodyTrackVibratoEventData
                             {
-                                Part = (reader.ReadByte() >> 5) & 0x3,
+                                Channel = (reader.ReadByte() >> 5) & 0x3,
                                 Switch = reader.ReadByte() >> 6
                             };
 

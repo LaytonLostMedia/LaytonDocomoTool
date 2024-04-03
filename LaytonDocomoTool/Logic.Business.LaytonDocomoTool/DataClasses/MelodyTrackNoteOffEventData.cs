@@ -9,7 +9,7 @@ namespace Logic.Business.LaytonDocomoTool.DataClasses
 {
     public class MelodyTrackNoteOffEventData : MelodyTrackEventData
     {
-        public int Voice { get; set; }
+        public int Channel { get; set; }
         public int Key { get; set; }
         public int Velocity { get; set; }
         public int OctaveShift { get; set; }

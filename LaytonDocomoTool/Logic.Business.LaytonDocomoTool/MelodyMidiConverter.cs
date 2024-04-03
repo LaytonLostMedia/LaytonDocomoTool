@@ -73,8 +73,8 @@ namespace Logic.Business.LaytonDocomoTool
 
                         eventData = new MelodyTrackNoteOffEventData
                         {
-                            Voice = noteData.Voice,
-                            Key = noteData.Key,
+                            Channel = noteData.Channel,
+                            Key = noteData.Note,
                             Velocity = noteData.Velocity,
                             OctaveShift = noteData.OctaveShift
                         };
@@ -86,7 +86,7 @@ namespace Logic.Business.LaytonDocomoTool
 
                         eventData = new MelodyTrackCombinedInstrumentEventData
                         {
-                            Part = lowInstrumentData.Part,
+                            Part = lowInstrumentData.Channel,
                             Instrument = (highInstrumentData.Instrument << 6) | lowInstrumentData.Instrument
                         };
                         break;
@@ -120,9 +120,9 @@ namespace Logic.Business.LaytonDocomoTool
                 switch (element.melodyEvent)
                 {
                     case MelodyTrackNoteEventData noteData:
-                        int onKey = ApplyOctaveShift(noteData.Key + 45, noteData.OctaveShift);
+                        int onKey = ApplyOctaveShift(noteData.Note + 45, noteData.OctaveShift);
 
-                        channel += noteData.Voice;
+                        channel += noteData.Channel;
                         midiEvent = new MidiTrackNoteOnEventData
                         {
                             Channel = channel,
@@ -134,7 +134,7 @@ namespace Logic.Business.LaytonDocomoTool
                     case MelodyTrackNoteOffEventData noteOffData:
                         int offKey = ApplyOctaveShift(noteOffData.Key + 45, noteOffData.OctaveShift);
 
-                        channel += noteOffData.Voice;
+                        channel += noteOffData.Channel;
                         midiEvent = new MidiTrackNoteOffEventData
                         {
                             Channel = channel,
@@ -177,7 +177,7 @@ namespace Logic.Business.LaytonDocomoTool
                         break;
 
                     case MelodyTrackModulationEventData modulationData:
-                        channel += modulationData.Part;
+                        channel += modulationData.Channel;
                         midiEvent = new MidiTrackControllerEventData
                         {
                             Channel = channel,
@@ -187,7 +187,7 @@ namespace Logic.Business.LaytonDocomoTool
                         break;
 
                     case MelodyTrackVolumeEventData volumeData:
-                        channel += volumeData.Part;
+                        channel += volumeData.Channel;
                         midiEvent = new MidiTrackControllerEventData
                         {
                             Channel = channel,
@@ -197,7 +197,7 @@ namespace Logic.Business.LaytonDocomoTool
                         break;
 
                     case MelodyTrackValanceEventData valanceData:
-                        channel += valanceData.Part;
+                        channel += valanceData.Channel;
                         midiEvent = new MidiTrackControllerEventData
                         {
                             Channel = channel,
@@ -207,7 +207,7 @@ namespace Logic.Business.LaytonDocomoTool
                         break;
 
                     case MelodyTrackPitchBendEventData pitchBendData:
-                        channel += pitchBendData.Part;
+                        channel += pitchBendData.Channel;
                         midiEvent = new MidiTrackPitchBendEventData
                         {
                             Channel = channel,
@@ -216,7 +216,7 @@ namespace Logic.Business.LaytonDocomoTool
                         break;
 
                     case MelodyTrackPitchBendRangeEventData pitchBendRangeData:
-                        channel += pitchBendRangeData.Part;
+                        channel += pitchBendRangeData.Channel;
                         result.Add(new MidiTrackElementData
                         {
                             DeltaTime = element.totalTime - channelTimes[channel],
@@ -252,7 +252,7 @@ namespace Logic.Business.LaytonDocomoTool
                         continue;
 
                     case MelodyTrackMasterCoarseTuningEventData masterCoarseTuningData:
-                        channel += masterCoarseTuningData.Part;
+                        channel += masterCoarseTuningData.Channel;
                         result.Add(new MidiTrackElementData
                         {
                             DeltaTime = element.totalTime - channelTimes[channel],

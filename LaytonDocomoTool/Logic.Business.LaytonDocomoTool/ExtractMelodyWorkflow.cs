@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using Logic.Business.LaytonDocomoTool.InternalContract;
+﻿using Logic.Business.LaytonDocomoTool.InternalContract;
 using Logic.Domain.Level5Management.Docomo.Contract.Melody;
 using Logic.Domain.Level5Management.Docomo.Contract.Melody.DataClasses;
 using Logic.Domain.MidiManagement.Contract;
@@ -27,18 +26,13 @@ namespace Logic.Business.LaytonDocomoTool
 
         public void Work()
         {
-            //using Stream fileStream = File.OpenRead(_config.FilePath);
-            //using Stream outputStream = File.Create(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(_config.FilePath))!, Path.GetFileNameWithoutExtension(_config.FilePath) + ".mid"));
+            using Stream fileStream = File.OpenRead(_config.FilePath);
+            using Stream outputStream = File.Create(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(_config.FilePath))!, Path.GetFileNameWithoutExtension(_config.FilePath) + ".mid"));
+            
+            MelodyData mldData = _melodyParser.Parse(fileStream);
 
-            var path = @"D:\Users\Kirito\Desktop\Layton_Motdm\tools\psm380";
+            var tracks = new MelodyTrackElementData[16][];
 
-            using Stream s1 = File.OpenRead(Path.Combine(path, "se_011.mid"));
-            using Stream s2 = File.OpenRead(Path.Combine(path, "se_011.mld"));
-
-            MidiData midData = _midiParser.Parse(s1);
-            MelodyData mldData = _melodyParser.Parse(s2);
-
-            //MelodyData melodyData = _melodyParser.Parse(fileStream);
             MidiData midiData = _melodyMidiConverter.ConvertMelodyData(mldData);
 
             //_midiWriter.Write(midiData, outputStream);

@@ -8,7 +8,7 @@ namespace Logic.Domain.Level5Management.Docomo.Contract.Melody.DataClasses.Event
 {
     public sealed class MelodyTrackModulationEventData : MelodyTrackInstrumentEventData
     {
-        public int Part { get; set; }
+        public int Channel { get; set; }
         public int Depth { get; set; }
     }
 }
