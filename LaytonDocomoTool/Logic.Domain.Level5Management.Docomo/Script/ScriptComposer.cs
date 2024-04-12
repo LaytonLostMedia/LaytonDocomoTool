@@ -6,21 +6,21 @@ namespace Logic.Domain.Level5Management.Docomo.Script
 {
     internal class ScriptComposer : IScriptComposer
     {
-        public EventEntryData[] Compose(EventData[] events)
+        public EventEntryData[] Compose(EventData[] events, Encoding textEncoding)
         {
             var result = new List<EventEntryData>();
 
-            Compose(events, result);
+            Compose(events, textEncoding, result);
 
             return result.ToArray();
         }
 
-        private void Compose(EventData[] events, IList<EventEntryData> entries)
+        private void Compose(EventData[] events, Encoding textEncoding, IList<EventEntryData> entries)
         {
             var conditionCount = 0;
             for (var i = 0; i < events.Length;)
             {
-                EventEntryData composedEventEntry = ComposeEntry(events[i]);
+                EventEntryData composedEventEntry = ComposeEntry(events[i], textEncoding);
                 composedEventEntry.identifier = composedEventEntry.identifier.PadRight(10);
 
                 if (events[i] is EndIfEventData endIfData)
@@ -45,11 +45,11 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                 }
 
                 if (events[i++] is BranchBlockEventData branchData)
-                    Compose(branchData.Events, entries);
+                    Compose(branchData.Events, textEncoding, entries);
             }
         }
 
-        private EventEntryData ComposeEntry(EventData eventData)
+        private EventEntryData ComposeEntry(EventData eventData, Encoding textEncoding)
         {
             switch (eventData)
             {
@@ -102,7 +102,7 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                         (byte)addEvent.Y, (byte)(addEvent.Y >> 8),
                     });
 
-                    byte[] textBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(addEvent.Text);
+                    byte[] textBytes = textEncoding.GetBytes(addEvent.Text);
 
                     addEventBytes.AddRange(new[] { (byte)textBytes.Length, (byte)(textBytes.Length >> 8) });
                     addEventBytes.AddRange(textBytes);
@@ -566,7 +566,7 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                         textWindow.PersonId
                     };
 
-                    byte[] textBytes1 = Encoding.GetEncoding("Shift-JIS").GetBytes(textWindow.Text);
+                    byte[] textBytes1 = textEncoding.GetBytes(textWindow.Text);
 
                     textWindowBytes.AddRange(new[] { (byte)textBytes1.Length, (byte)(textBytes1.Length >> 8) });
                     textWindowBytes.AddRange(textBytes1);

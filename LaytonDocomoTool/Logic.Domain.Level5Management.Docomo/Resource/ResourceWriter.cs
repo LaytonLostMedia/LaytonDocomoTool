@@ -16,9 +16,9 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
             _resourceComposer = resourceComposer;
         }
 
-        public void Write(ResourceData resourceData, Stream output)
+        public void Write(ResourceData resourceData, Encoding textEncoding, Stream output)
         {
-            ResourceEntryData[] entries = _resourceComposer.Compose(resourceData);
+            ResourceEntryData[] entries = _resourceComposer.Compose(resourceData, textEncoding);
 
             Write(entries, output);
         }

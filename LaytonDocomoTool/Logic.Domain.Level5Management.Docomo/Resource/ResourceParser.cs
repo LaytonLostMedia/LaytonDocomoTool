@@ -10,24 +10,22 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
         private readonly IBinaryFactory _binaryFactory;
         private readonly IStreamFactory _streamFactory;
         private readonly IResourceReader _resourceReader;
-        private readonly Encoding _sjisEncoding;
 
         public ResourceParser(IBinaryFactory binaryFactory, IStreamFactory streamFactory, IResourceReader resourceReader)
         {
             _binaryFactory = binaryFactory;
             _streamFactory = streamFactory;
             _resourceReader = resourceReader;
-            _sjisEncoding = Encoding.GetEncoding("Shift-JIS");
         }
 
-        public ResourceData Parse(Stream resourceStream)
+        public ResourceData Parse(Stream resourceStream, Encoding textEncoding)
         {
             ResourceEntryData[] entries = _resourceReader.Read(resourceStream);
 
-            return Parse(entries);
+            return Parse(entries, textEncoding);
         }
 
-        public ResourceData Parse(ResourceEntryData[] entries)
+        public ResourceData Parse(ResourceEntryData[] entries, Encoding textEncoding)
         {
             var resourceFiles = new List<ResourceResEntryData>();
 
@@ -49,11 +47,11 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                 switch (entry.Identifier)
                 {
                     case "obj":
-                        AddObjects(entry.Data, resourceFiles, objects);
+                        AddObjects(entry.Data, resourceFiles, objects, textEncoding);
                         break;
 
                     case "ary":
-                        AddArrayValues(entry.Data, resourceArrays);
+                        AddArrayValues(entry.Data, resourceArrays, textEncoding);
                         break;
                 }
             }
@@ -74,7 +72,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
 
             for (var i = 0; i < resCount; i++)
             {
-                string name = ReadString(reader);
+                string name = ReadString(reader, Encoding.ASCII);
 
                 int dataLength = reader.ReadInt32();
                 Stream dataStream = _streamFactory.CreateSubStream(resStream, resStream.Position, dataLength);
@@ -89,11 +87,11 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
             }
         }
 
-        private void AddArrayValues(Stream aryStream, ResourceArrayData arrayData)
+        private void AddArrayValues(Stream aryStream, ResourceArrayData arrayData, Encoding textEncoding)
         {
             using IBinaryReaderX reader = _binaryFactory.CreateReader(aryStream, true);
 
-            string identifier = ReadString(reader);
+            string identifier = ReadString(reader, Encoding.ASCII);
             switch (identifier)
             {
                 case "int":
@@ -128,7 +126,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                         if (aryStream.Position >= aryStream.Length)
                             break;
 
-                        stringValues.Add(ReadString(reader));
+                        stringValues.Add(ReadString(reader, textEncoding));
                     }
 
                     arrayData.StringValues = stringValues.ToArray();
@@ -136,13 +134,13 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
             }
         }
 
-        private void AddObjects(Stream objStream, IList<ResourceResEntryData> resourceEntries, IList<ResourceObjectData> objects)
+        private void AddObjects(Stream objStream, IList<ResourceResEntryData> resourceEntries, IList<ResourceObjectData> objects, Encoding textEncoding)
         {
             using IBinaryReaderX reader = _binaryFactory.CreateReader(objStream, true);
 
             while (objStream.Position < objStream.Length)
             {
-                string identifier = ReadString(reader);
+                string identifier = ReadString(reader, Encoding.ASCII);
                 switch (identifier)
                 {
                     case "parts":
@@ -265,7 +263,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                         pimgObject.ImageNames = new string[nameCount];
 
                         for (var i = 0; i < pimgObject.ImageNames.Length; i++)
-                            pimgObject.ImageNames[i] = ReadString(reader);
+                            pimgObject.ImageNames[i] = ReadString(reader, Encoding.ASCII);
 
                         objects.Add(pimgObject);
                         break;
@@ -316,7 +314,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                                 Y = reader.ReadInt32(),
                                 OrderY = reader.ReadInt32(),
                                 OrderX = reader.ReadInt32(),
-                                Result = ReadString(reader)
+                                Result = ReadString(reader, textEncoding)
                             };
                         }
 
@@ -359,7 +357,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
 
                         var texts = new string[reader.ReadInt32()];
                         for (var i = 0; i < texts.Length; i++)
-                            texts[i] = ReadString(reader);
+                            texts[i] = ReadString(reader, textEncoding);
 
                         int digits = reader.ReadInt32();
 
@@ -411,7 +409,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
 
                         var v25 = new string[v13];
                         for (var i = 0; i < v13; i++)
-                            v25[i] = ReadString(reader);
+                            v25[i] = ReadString(reader, textEncoding);
 
                         objects.Add(new ResourceObjectSelectData
                         {
@@ -507,17 +505,17 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                         var v58 = new string[v51];
 
                         for (var i = 0; i < v51; i++)
-                            v58[i] = ReadString(reader);
+                            v58[i] = ReadString(reader, textEncoding);
 
                         var v59 = new string[v52];
 
                         for (var i = 0; i < v52; i++)
-                            v59[i] = ReadString(reader);
+                            v59[i] = ReadString(reader, Encoding.ASCII);
 
                         var v510 = new string[v53];
 
                         for (var i = 0; i < v53; i++)
-                            v510[i] = ReadString(reader);
+                            v510[i] = ReadString(reader, Encoding.ASCII);
 
                         objects.Add(new ResourceObjectLineData
                         {
@@ -538,12 +536,12 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
             }
         }
 
-        private string ReadString(IBinaryReaderX reader)
+        private string ReadString(IBinaryReaderX reader, Encoding textEncoding)
         {
             int identifierSize = reader.ReadInt16();
             byte[] identifierBytes = reader.ReadBytes(identifierSize);
 
-            string identifier = _sjisEncoding.GetString(identifierBytes);
+            string identifier = textEncoding.GetString(identifierBytes);
 
             return identifier;
         }

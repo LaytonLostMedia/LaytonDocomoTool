@@ -10,15 +10,17 @@ namespace Logic.Business.LaytonDocomoTool
     {
         private readonly LaytonDocomoExtractorConfiguration _config;
         private readonly IScriptParser _scriptParser;
+        private readonly IEncodingProvider _encodingProvider;
         private readonly ILevel5DocomoEventDataConverter _scriptConverter;
         private readonly ILevel5DocomoWhitespaceNormalizer _whitespaceNormalizer;
         private readonly ILevel5DocomoComposer _scriptComposer;
 
-        public ExtractScriptWorkflow(LaytonDocomoExtractorConfiguration config, IScriptParser scriptParser,
+        public ExtractScriptWorkflow(LaytonDocomoExtractorConfiguration config, IScriptParser scriptParser, IEncodingProvider encodingProvider,
             ILevel5DocomoEventDataConverter scriptConverter, ILevel5DocomoWhitespaceNormalizer whitespaceNormalizer, ILevel5DocomoComposer scriptComposer)
         {
             _config = config;
             _scriptParser = scriptParser;
+            _encodingProvider = encodingProvider;
             _scriptConverter = scriptConverter;
             _whitespaceNormalizer = whitespaceNormalizer;
             _scriptComposer = scriptComposer;
@@ -37,7 +39,7 @@ namespace Logic.Business.LaytonDocomoTool
         {
             using StreamWriter scriptWriter = File.CreateText(extractFilePath);
 
-            EventData[] events = _scriptParser.Parse(scriptStream);
+            EventData[] events = _scriptParser.Parse(scriptStream, _encodingProvider.GetEncoding());
 
             CodeUnitSyntax codeUnit = _scriptConverter.CreateCodeUnit(events);
             _whitespaceNormalizer.NormalizeCodeUnit(codeUnit);

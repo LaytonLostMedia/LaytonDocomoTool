@@ -8,19 +8,17 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
     internal class ResourceComposer : IResourceComposer
     {
         private readonly IBinaryFactory _binaryFactory;
-        private readonly Encoding _sjisEncoding;
 
         public ResourceComposer(IBinaryFactory binaryFactory)
         {
             _binaryFactory = binaryFactory;
-            _sjisEncoding = Encoding.GetEncoding("Shift-JIS");
         }
 
-        public ResourceEntryData[] Compose(ResourceData resourceData)
+        public ResourceEntryData[] Compose(ResourceData resourceData, Encoding textEncoding)
         {
             var result = new List<ResourceEntryData>();
 
-            ResourceEntryData resourcesEntry = ComposeResourceObjects(resourceData.Objects.Where(x => x is ResourceObjectPimgData).ToArray(), null);
+            ResourceEntryData resourcesEntry = ComposeResourceObjects(resourceData.Objects.Where(x => x is ResourceObjectPimgData).ToArray(), Array.Empty<ResourceResEntryData>(), textEncoding);
             if (resourcesEntry.Data.Length > 0)
                 result.Add(resourcesEntry);
 
@@ -28,11 +26,11 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
             if (resourcesEntry.Data.Length > 0)
                 result.Add(resourcesEntry);
 
-            resourcesEntry = ComposeResourceObjects(resourceData.Objects.Where(x => x is not ResourceObjectPimgData).ToArray(), resourceData.ResourceFiles);
+            resourcesEntry = ComposeResourceObjects(resourceData.Objects.Where(x => x is not ResourceObjectPimgData).ToArray(), resourceData.ResourceFiles, textEncoding);
             if (resourcesEntry.Data.Length > 0)
                 result.Add(resourcesEntry);
 
-            IReadOnlyList<ResourceEntryData> resourceEntries = ComposeResourceArrays(resourceData.ValueArrays);
+            IReadOnlyList<ResourceEntryData> resourceEntries = ComposeResourceArrays(resourceData.ValueArrays, textEncoding);
             foreach (ResourceEntryData resourceEntry in resourceEntries)
                 if (resourcesEntry.Data.Length > 0)
                     result.Add(resourceEntry);
@@ -49,7 +47,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
 
             foreach (ResourceResEntryData resource in resources)
             {
-                WriteString(writer, resource.Name);
+                WriteString(writer, resource.Name, Encoding.ASCII);
 
                 writer.Write((int)resource.Data.Length);
                 resource.Data.CopyTo(resourceStream);
@@ -64,7 +62,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
             };
         }
 
-        private ResourceEntryData ComposeResourceObjects(ResourceObjectData[] objects, ResourceResEntryData[] resources)
+        private ResourceEntryData ComposeResourceObjects(ResourceObjectData[] objects, ResourceResEntryData[] resources, Encoding textEncoding)
         {
             var objectStream = new MemoryStream();
             using IBinaryWriterX writer = _binaryFactory.CreateWriter(objectStream, true);
@@ -74,7 +72,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                 switch (resourceObj)
                 {
                     case ResourceObjectPartsData partsData:
-                        WriteString(writer, "parts");
+                        WriteString(writer, "parts", Encoding.ASCII);
 
                         writer.Write(partsData.Parts.Length);
 
@@ -91,7 +89,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                         break;
 
                     case ResourceObjectAnimationData animationData:
-                        WriteString(writer, "animation");
+                        WriteString(writer, "animation", Encoding.ASCII);
 
                         writer.Write(animationData.Animations.Length);
 
@@ -116,7 +114,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                         break;
 
                     case ResourceObjectLayoutData layoutData:
-                        WriteString(writer, "layout");
+                        WriteString(writer, "layout", Encoding.ASCII);
 
                         writer.Write(0);
 
@@ -156,18 +154,18 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                         break;
 
                     case ResourceObjectPimgData pimgData:
-                        WriteString(writer, "pimg");
+                        WriteString(writer, "pimg", Encoding.ASCII);
 
                         writer.Write(0);
 
                         writer.Write(pimgData.ImageNames.Length);
                         foreach (string imageName in pimgData.ImageNames)
-                            WriteString(writer, imageName);
+                            WriteString(writer, imageName, Encoding.ASCII);
 
                         break;
 
                     case ResourceObjectButtonData buttonData:
-                        WriteString(writer, "button");
+                        WriteString(writer, "button", Encoding.ASCII);
 
                         writer.Write(buttonData.Buttons.Length + 1);
                         writer.Write(buttonData.BackgroundImageName == null ? -1 : Array.IndexOf(resources, resources.FirstOrDefault(x => x.Name == buttonData.BackgroundImageName)));
@@ -188,12 +186,12 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                             writer.Write(button.Y);
                             writer.Write(button.OrderY);
                             writer.Write(button.OrderX);
-                            WriteString(writer, button.Result);
+                            WriteString(writer, button.Result, textEncoding);
                         }
                         break;
 
                     case ResourceObjectAnimeData animeData:
-                        WriteString(writer, "anime");
+                        WriteString(writer, "anime", Encoding.ASCII);
 
                         writer.Write(0);
 
@@ -211,7 +209,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                         break;
 
                     case ResourceObjectKeyboardData keyboardData:
-                        WriteString(writer, "keyboard");
+                        WriteString(writer, "keyboard", Encoding.ASCII);
 
                         writer.Write(0);
 
@@ -219,13 +217,13 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
 
                         writer.Write(keyboardData.Solutions.Length);
                         foreach (string solution in keyboardData.Solutions)
-                            WriteString(writer, solution);
+                            WriteString(writer, solution, textEncoding);
 
                         writer.Write(keyboardData.Digits);
                         break;
 
                     case ResourceObjectSelectData selectData:
-                        WriteString(writer, "select");
+                        WriteString(writer, "select", Encoding.ASCII);
 
                         writer.Write(0);
 
@@ -262,12 +260,12 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                         }
 
                         foreach (string solution in selectData.Solutions)
-                            WriteString(writer, solution);
+                            WriteString(writer, solution, textEncoding);
 
                         break;
 
                     case ResourceObjectSwitchData switchData:
-                        WriteString(writer, "switch");
+                        WriteString(writer, "switch", Encoding.ASCII);
 
                         int elementCount3 = Math.Min(Math.Min(switchData.ImageNames.Length, switchData.ImagePosX.Length), switchData.ImagePosY.Length);
                         elementCount3 = Math.Min(Math.Min(elementCount3, switchData.ImagePosY.Length), switchData.SelectorFlipMode.Length);
@@ -296,7 +294,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                         break;
 
                     case ResourceObjectLineData lineData:
-                        WriteString(writer, "line");
+                        WriteString(writer, "line", Encoding.ASCII);
 
                         writer.Write(0);
 
@@ -319,13 +317,13 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                         }
 
                         foreach (string name in lineData.Solution)
-                            WriteString(writer, name);
+                            WriteString(writer, name, textEncoding);
 
                         foreach (string name in lineData.BlockPointCombination)
-                            WriteString(writer, name);
+                            WriteString(writer, name, Encoding.ASCII);
 
                         foreach (string name in lineData.Unknown1)
-                            WriteString(writer, name);
+                            WriteString(writer, name, Encoding.ASCII);
                         break;
 
                     default:
@@ -342,7 +340,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
             };
         }
 
-        private IReadOnlyList<ResourceEntryData> ComposeResourceArrays(ResourceArrayData resourceArrays)
+        private IReadOnlyList<ResourceEntryData> ComposeResourceArrays(ResourceArrayData resourceArrays, Encoding textEncoding)
         {
             var result = new List<ResourceEntryData>();
 
@@ -351,7 +349,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                 var resourceStream = new MemoryStream();
                 using IBinaryWriterX writer = _binaryFactory.CreateWriter(resourceStream, true);
 
-                WriteString(writer, "int");
+                WriteString(writer, "int", Encoding.ASCII);
 
                 foreach (int intValue in resourceArrays.IntValues!)
                     writer.Write(intValue);
@@ -370,7 +368,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                 var resourceStream = new MemoryStream();
                 using IBinaryWriterX writer = _binaryFactory.CreateWriter(resourceStream, true);
 
-                WriteString(writer, "short");
+                WriteString(writer, "short", Encoding.ASCII);
 
                 foreach (short shortValue in resourceArrays.ShortValues!)
                     writer.Write(shortValue);
@@ -389,7 +387,7 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                 var resourceStream = new MemoryStream();
                 using IBinaryWriterX writer = _binaryFactory.CreateWriter(resourceStream, true);
 
-                WriteString(writer, "byte");
+                WriteString(writer, "byte", Encoding.ASCII);
 
                 writer.Write(resourceArrays.ByteValues!);
 
@@ -407,10 +405,10 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
                 var resourceStream = new MemoryStream();
                 using IBinaryWriterX writer = _binaryFactory.CreateWriter(resourceStream, true);
 
-                WriteString(writer, "str");
+                WriteString(writer, "str", Encoding.ASCII);
 
                 foreach (string stringValue in resourceArrays.StringValues!)
-                    WriteString(writer, stringValue);
+                    WriteString(writer, stringValue, textEncoding);
 
                 resourceStream.Position = 0;
 
@@ -424,9 +422,9 @@ namespace Logic.Domain.Level5Management.Docomo.Resource
             return result.ToArray();
         }
 
-        private void WriteString(IBinaryWriterX writer, string value)
+        private void WriteString(IBinaryWriterX writer, string value, Encoding textEncoding)
         {
-            byte[] stringBytes = _sjisEncoding.GetBytes(value);
+            byte[] stringBytes = textEncoding.GetBytes(value);
             int stringLength = stringBytes.Length;
 
             writer.Write((short)stringLength);

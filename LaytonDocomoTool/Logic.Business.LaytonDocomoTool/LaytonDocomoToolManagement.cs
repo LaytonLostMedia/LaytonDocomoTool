@@ -223,6 +223,9 @@ namespace Logic.Business.LaytonDocomoTool
             Console.WriteLine("  -o, --operation\tThe operation to execute.");
             Console.WriteLine("    Valid operations are: 'extract', 'create'");
             Console.WriteLine("    Default: 'extract'");
+            Console.WriteLine("  -e, --encoding\tThe encoding to interpret text with.");
+            Console.WriteLine("    Valid encodings are: 'sjis', 'windows-1252'");
+            Console.WriteLine("    Default: 'sjis'");
             Console.WriteLine("  -t, --type\t\tThe type of file to process.");
             Console.WriteLine("    Valid types are: 'jar', 'table', 'script', 'resource'");
             Console.WriteLine("    Default: 'jar'");

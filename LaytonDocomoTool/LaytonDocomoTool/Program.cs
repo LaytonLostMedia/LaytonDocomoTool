@@ -5,8 +5,6 @@ using CrossCutting.Core.Contract.Messages;
 using LaytonDocomoTool;
 using Logic.Business.LaytonDocomoTool.Contract;
 
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
 KernelLoader loader = new();
 ICoCoKernel kernel = loader.Initialize();
 

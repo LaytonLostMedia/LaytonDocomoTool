@@ -10,6 +10,7 @@ namespace Logic.Business.LaytonDocomoTool
                 return;
 
             ValidateOperation(config);
+            ValidateEncoding(config);
             ValidateType(config);
             ValidateFilePath(config);
         }
@@ -21,6 +22,15 @@ namespace Logic.Business.LaytonDocomoTool
 
             if (config.Operation != "extract" && config.Operation != "create")
                 throw new InvalidOperationException($"The operation mode '{config.Operation}' is not valid. Use -h to see a list of valid operation modes.");
+        }
+
+        private void ValidateEncoding(LaytonDocomoExtractorConfiguration config)
+        {
+            if (string.IsNullOrWhiteSpace(config.Encoding))
+                throw new InvalidOperationException("No encoding was given. Specify an encoding by using the -e argument.");
+
+            if (config.Encoding != "windows-1252" && config.Encoding != "sjis")
+                throw new InvalidOperationException($"The encoding '{config.Encoding}' is not valid. Use -h to see a list of valid encodings.");
         }
 
         private void ValidateType(LaytonDocomoExtractorConfiguration config)

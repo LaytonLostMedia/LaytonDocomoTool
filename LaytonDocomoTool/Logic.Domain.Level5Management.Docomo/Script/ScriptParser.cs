@@ -13,16 +13,18 @@ namespace Logic.Domain.Level5Management.Docomo.Script
             _reader = reader;
         }
 
-        public EventData[] Parse(Stream input)
+        public EventData[] Parse(Stream input, Encoding textEncoding)
         {
             EventEntryData[] entries = _reader.Read(input);
 
-            return Parse(entries);
+            return Parse(entries, textEncoding);
         }
 
-        public EventData[] Parse(EventEntryData[] entries)
+        public EventData[] Parse(EventEntryData[] entries, Encoding textEncoding)
         {
-            EventData[] parsedEntries = entries.Select(ParseEntry).ToArray();
+            var parsedEntries = new EventData[entries.Length];
+            for (var i = 0; i < entries.Length; i++)
+                parsedEntries[i] = ParseEntry(entries[i], textEncoding);
 
             var index = 0;
             return Parse(parsedEntries, ref index);
@@ -169,7 +171,7 @@ namespace Logic.Domain.Level5Management.Docomo.Script
             return -1;
         }
 
-        private EventData ParseEntry(EventEntryData entry)
+        private EventData ParseEntry(EventEntryData entry, Encoding textEncoding)
         {
             switch (entry.identifier.Trim())
             {
@@ -211,7 +213,7 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                     var nameData = new byte[nameSize];
                     Array.Copy(entry.data, 11, nameData, 0, nameSize);
 
-                    addEvent.Text = Encoding.GetEncoding("Shift-JIS").GetString(nameData);
+                    addEvent.Text = textEncoding.GetString(nameData);
 
                     if (addEvent.Value1 != 4)
                         return addEvent;
@@ -520,7 +522,7 @@ namespace Logic.Domain.Level5Management.Docomo.Script
 
                     Array.Copy(entry.data, 4, textBytes, 0, textLength);
 
-                    textEvent.Text = Encoding.GetEncoding("Shift-JIS").GetString(textBytes);
+                    textEvent.Text = textEncoding.GetString(textBytes);
 
                     return textEvent;
 

@@ -12,12 +12,14 @@ namespace Logic.Business.LaytonDocomoTool
         private readonly LaytonDocomoExtractorConfiguration _config;
         private readonly IResourceParser _resourceParser;
         private readonly ISerializer _serializer;
+        private readonly IEncodingProvider _encodingProvider;
 
-        public ExtractResourceWorkflow(LaytonDocomoExtractorConfiguration config, IResourceParser resourceParser, ISerializer serializer)
+        public ExtractResourceWorkflow(LaytonDocomoExtractorConfiguration config, IResourceParser resourceParser, ISerializer serializer, IEncodingProvider encodingProvider)
         {
             _config = config;
             _resourceParser = resourceParser;
             _serializer = serializer;
+            _encodingProvider = encodingProvider;
         }
 
         public void Work()
@@ -31,7 +33,7 @@ namespace Logic.Business.LaytonDocomoTool
 
         public void Work(Stream resourceStream, string extractDir)
         {
-            ResourceData resourceData = _resourceParser.Parse(resourceStream);
+            ResourceData resourceData = _resourceParser.Parse(resourceStream, _encodingProvider.GetEncoding());
 
             ExtractResourceFiles(extractDir, resourceData.ResourceFiles);
 
