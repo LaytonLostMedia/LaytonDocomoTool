@@ -213,22 +213,37 @@ namespace Logic.Business.LaytonDocomoTool
 
         private void AddParameters(EventData eventData, IReadOnlyList<ExpressionSyntax> parameters)
         {
-            var index = 0;
-            foreach (PropertyInfo property in eventData.GetType().GetProperties())
+            if (eventData is ConditionalBranchBlockEventData conditionalBranch)
             {
-                if (index >= parameters.Count)
-                    break;
+                conditionalBranch.Id = GetValue<byte>(parameters[0]);
 
-                Type valueType = property.PropertyType;
-                if (valueType.IsArray)
-                    valueType = valueType.GetElementType()!;
-                if (Nullable.GetUnderlyingType(valueType) != null)
-                    valueType = Nullable.GetUnderlyingType(valueType)!;
+                conditionalBranch.Conditions = new IfConditionData[parameters.Count - 1];
+                for (var i = 1; i < parameters.Count; i++)
+                    conditionalBranch.Conditions[i - 1] = CreateIfCondition(parameters[i]);
+            }
+            else if (eventData is BranchEventData branch)
+            {
+                branch.Id = GetValue<byte>(parameters[0]);
+            }
+            else
+            {
+                var index = 0;
+                foreach (PropertyInfo property in eventData.GetType().GetProperties())
+                {
+                    if (index >= parameters.Count)
+                        break;
 
-                ExpressionSyntax valueExpression = parameters[index++];
-                object value = GetValue(valueExpression, valueType);
+                    Type valueType = property.PropertyType;
+                    if (valueType.IsArray)
+                        valueType = valueType.GetElementType()!;
+                    if (Nullable.GetUnderlyingType(valueType) != null)
+                        valueType = Nullable.GetUnderlyingType(valueType)!;
 
-                property.SetValue(eventData, value);
+                    ExpressionSyntax valueExpression = parameters[index++];
+                    object value = GetValue(valueExpression, valueType);
+
+                    property.SetValue(eventData, value);
+                }
             }
         }
 

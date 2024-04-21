@@ -36,7 +36,7 @@ namespace Logic.Business.LaytonDocomoTool
             {
                 EventData currentEvent = events[i++];
 
-                StatementSyntax statement = currentEvent is IfEventData ifData ?
+                StatementSyntax statement = currentEvent is IfEventData { Events: { } } ifData ?
                     CreateIfElseStatement(ifData, events, ref i) :
                     CreateFunctionInvocationStatement(currentEvent);
 
@@ -324,14 +324,28 @@ namespace Logic.Business.LaytonDocomoTool
         private CommaSeparatedSyntaxList<ExpressionSyntax> CreateCommaSeparatedList(EventData eventData)
         {
             var result = new List<ExpressionSyntax>();
-
-            foreach (PropertyInfo property in eventData.GetType().GetProperties())
+            
+            if (eventData is ConditionalBranchBlockEventData conditionalBranch)
             {
-                object? value = property.GetValue(eventData);
-                if (value == null)
-                    continue;
+                result.Add(CreateValueExpression(conditionalBranch.Id));
 
-                result.Add(CreateValueExpression(value));
+                foreach (IfConditionData condition in conditionalBranch.Conditions)
+                    result.Add(CreateIfConditionExpression(condition));
+            }
+            else if (eventData is BranchEventData branch)
+            {
+                result.Add(CreateValueExpression(branch.Id));
+            }
+            else
+            {
+                foreach (PropertyInfo property in eventData.GetType().GetProperties())
+                {
+                    object? value = property.GetValue(eventData);
+                    if (value == null)
+                        continue;
+
+                    result.Add(CreateValueExpression(value));
+                }
             }
 
             return new CommaSeparatedSyntaxList<ExpressionSyntax>(result);

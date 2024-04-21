@@ -396,3 +396,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/LaytonDocomoTool/LaytonDocomoTool/Properties/launchSettings.json

@@ -13,18 +13,21 @@ namespace Logic.Domain.Level5Management.Docomo.Script
             _reader = reader;
         }
 
-        public EventData[] Parse(Stream input, Encoding textEncoding)
+        public EventData[] Parse(Stream input, Encoding textEncoding, bool createBranches = true)
         {
             EventEntryData[] entries = _reader.Read(input);
 
-            return Parse(entries, textEncoding);
+            return Parse(entries, textEncoding, createBranches);
         }
 
-        public EventData[] Parse(EventEntryData[] entries, Encoding textEncoding)
+        public EventData[] Parse(EventEntryData[] entries, Encoding textEncoding, bool createBranches = true)
         {
             var parsedEntries = new EventData[entries.Length];
             for (var i = 0; i < entries.Length; i++)
                 parsedEntries[i] = ParseEntry(entries[i], textEncoding);
+
+            if (!createBranches)
+                return parsedEntries;
 
             var index = 0;
             return Parse(parsedEntries, ref index);

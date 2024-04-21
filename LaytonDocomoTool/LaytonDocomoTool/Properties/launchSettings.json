@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "LaytonDocomoExtractor": {
-      "commandName": "Project",
-      "commandLineArgs": "-o extract -t table -f D:\\Users\\Kirito\\Desktop\\Layton_Motdm\\data\\ch1\\new\\0.dat"
-    }
-  }
-}

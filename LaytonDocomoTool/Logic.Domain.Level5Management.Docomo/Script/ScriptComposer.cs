@@ -44,7 +44,7 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                         entries.Add(ComposeElseEntry(elseData.Id + j));
                 }
 
-                if (events[i++] is BranchBlockEventData branchData)
+                if (events[i++] is BranchBlockEventData { Events: { } } branchData)
                     Compose(branchData.Events, textEncoding, entries);
             }
         }

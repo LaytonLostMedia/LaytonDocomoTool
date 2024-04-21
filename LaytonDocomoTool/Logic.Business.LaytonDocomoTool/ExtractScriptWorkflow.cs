@@ -9,16 +9,18 @@ namespace Logic.Business.LaytonDocomoTool
     internal class ExtractScriptWorkflow : IExtractScriptWorkflow
     {
         private readonly LaytonDocomoExtractorConfiguration _config;
+        private readonly IScriptReader _scriptReader;
         private readonly IScriptParser _scriptParser;
         private readonly IEncodingProvider _encodingProvider;
         private readonly ILevel5DocomoEventDataConverter _scriptConverter;
         private readonly ILevel5DocomoWhitespaceNormalizer _whitespaceNormalizer;
         private readonly ILevel5DocomoComposer _scriptComposer;
 
-        public ExtractScriptWorkflow(LaytonDocomoExtractorConfiguration config, IScriptParser scriptParser, IEncodingProvider encodingProvider,
+        public ExtractScriptWorkflow(LaytonDocomoExtractorConfiguration config, IScriptReader scriptReader, IScriptParser scriptParser, IEncodingProvider encodingProvider,
             ILevel5DocomoEventDataConverter scriptConverter, ILevel5DocomoWhitespaceNormalizer whitespaceNormalizer, ILevel5DocomoComposer scriptComposer)
         {
             _config = config;
+            _scriptReader = scriptReader;
             _scriptParser = scriptParser;
             _encodingProvider = encodingProvider;
             _scriptConverter = scriptConverter;
@@ -39,7 +41,19 @@ namespace Logic.Business.LaytonDocomoTool
         {
             using StreamWriter scriptWriter = File.CreateText(extractFilePath);
 
-            EventData[] events = _scriptParser.Parse(scriptStream, _encodingProvider.GetEncoding());
+            EventEntryData[] entries = _scriptReader.Read(scriptStream);
+
+            EventData[] events;
+            try
+            {
+                events = _scriptParser.Parse(entries, _encodingProvider.GetEncoding());
+            }
+            catch
+            {
+                Console.WriteLine($"Error fully extracting script file {Path.GetFileNameWithoutExtension(extractFilePath)}. Try shallow decompilation.");
+
+                events = _scriptParser.Parse(entries, _encodingProvider.GetEncoding(), false);
+            }
 
             CodeUnitSyntax codeUnit = _scriptConverter.CreateCodeUnit(events);
             _whitespaceNormalizer.NormalizeCodeUnit(codeUnit);

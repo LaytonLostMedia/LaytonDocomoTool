@@ -54,6 +54,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                 semicolonToken = semicolonToken.WithTrailingTrivia("\r\n");
 
             ctx.ShouldLineBreak = false;
+            ctx.IsFirstElement = true;
             NormalizeFunctionInvocationExpression(functionInvocation.FunctionInvocation, ctx);
 
             functionInvocation.SetSemicolon(semicolonToken, false);
@@ -74,6 +75,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
                 parenClose = parenClose.WithTrailingTrivia("\r\n");
 
             ctx.ShouldLineBreak = false;
+            ctx.ShouldIndent = false;
             NormalizeCommaSeparatedList(functionParameters.Parameters, ctx);
 
             functionParameters.SetParenOpen(parenOpen, false);
@@ -245,8 +247,10 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
         private void NormalizeUnaryExpression(UnaryExpressionSyntax unary, WhitespaceNormalizeContext ctx)
         {
             SyntaxToken operation = unary.Operation.WithNoTrivia().WithTrailingTrivia(" ");
+            if (!ctx.IsFirstElement)
+                operation = operation.WithLeadingTrivia(" ");
 
-            ctx.IsFirstElement = false;
+            ctx.IsFirstElement = true;
             ctx.ShouldIndent = false;
             NormalizeExpression(unary.Expression, ctx);
 
@@ -259,7 +263,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
 
             SyntaxToken operation = logical.Operation.WithLeadingTrivia(" ").WithTrailingTrivia(" ");
 
-            ctx.IsFirstElement = false;
+            ctx.IsFirstElement = true;
             ctx.ShouldIndent = false;
             ctx.ShouldLineBreak = false;
             NormalizeExpression(logical.Left, ctx);
@@ -277,7 +281,7 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
 
             SyntaxToken operation = binary.Operation.WithLeadingTrivia(" ").WithTrailingTrivia(" ");
 
-            ctx.IsFirstElement = false;
+            ctx.IsFirstElement = true;
             ctx.ShouldIndent = false;
             ctx.ShouldLineBreak = false;
             NormalizeExpression(binary.Left, ctx);
@@ -326,8 +330,8 @@ namespace Logic.Domain.CodeAnalysis.Level5.Docomo
 
             if (ctx is { ShouldIndent: true, Indent: > 0 })
                 newIdentifier = newIdentifier.WithLeadingTrivia(new string('\t', ctx.Indent));
-            //else if (ctx.IsFirstElement)
-            //    newIdentifier = newIdentifier.WithTrailingTrivia(" ");
+            else if (!ctx.IsFirstElement)
+                newIdentifier = newIdentifier.WithLeadingTrivia(" ");
 
             simpleName.SetIdentifier(newIdentifier, false);
         }
