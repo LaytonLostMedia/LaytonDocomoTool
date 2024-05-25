@@ -229,6 +229,7 @@ namespace Logic.Business.LaytonDocomoTool
             Console.WriteLine("  -t, --type\t\tThe type of file to process.");
             Console.WriteLine("    Valid types are: 'jar', 'table', 'script', 'resource'");
             Console.WriteLine("    Default: 'jar'");
+            Console.WriteLine("  -m, --mapping\t\t[Optional] The path to the mapping file for scripts.");
             Console.WriteLine("  -f, --file\t\tThe file path or directory to use.");
             Console.WriteLine();
             Console.WriteLine("Examples:");
