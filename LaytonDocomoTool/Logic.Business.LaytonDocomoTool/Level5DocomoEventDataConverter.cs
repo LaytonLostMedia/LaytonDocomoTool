@@ -12,10 +12,12 @@ namespace Logic.Business.LaytonDocomoTool
     internal class Level5DocomoEventDataConverter : ILevel5DocomoEventDataConverter
     {
         private readonly ILevel5DocomoSyntaxFactory _syntaxFactory;
+        private readonly IScriptParameterMapper _parameterMapper;
 
-        public Level5DocomoEventDataConverter(ILevel5DocomoSyntaxFactory syntaxFactory)
+        public Level5DocomoEventDataConverter(ILevel5DocomoSyntaxFactory syntaxFactory, IScriptParameterMapper parameterMapper)
         {
             _syntaxFactory = syntaxFactory;
+            _parameterMapper = parameterMapper;
         }
 
         public CodeUnitSyntax CreateCodeUnit(EventData[] events)
@@ -232,7 +234,7 @@ namespace Logic.Business.LaytonDocomoTool
             SyntaxToken parenOpen = _syntaxFactory.Token(Level5DocomoTokenKind.ParenOpen);
             SyntaxToken parenClose = _syntaxFactory.Token(Level5DocomoTokenKind.ParenClose);
 
-            ExpressionSyntax compareValueExpression = CreateValueExpression(conditionData.ComparisonValue);
+            ExpressionSyntax compareValueExpression;
             CommaSeparatedSyntaxList<ExpressionSyntax> parameters;
 
             switch (conditionData.ComparisonType)
@@ -245,7 +247,24 @@ namespace Logic.Business.LaytonDocomoTool
                     parameters = new CommaSeparatedSyntaxList<ExpressionSyntax>(Array.Empty<ExpressionSyntax>());
                     break;
 
+                case 12:
+                    compareValueExpression = _parameterMapper.TryGetBitName(conditionData.ComparisonValue, out string name) ?
+                        CreateValueExpression(name) :
+                        CreateValueExpression(conditionData.ComparisonValue);
+
+                    parameters = new CommaSeparatedSyntaxList<ExpressionSyntax>(new[] { compareValueExpression });
+                    break;
+
+                case 14:
+                    compareValueExpression = _parameterMapper.TryGetStoryName(conditionData.ComparisonValue, out string name1) ?
+                        CreateValueExpression(name1) :
+                        CreateValueExpression(conditionData.ComparisonValue);
+
+                    parameters = new CommaSeparatedSyntaxList<ExpressionSyntax>(new[] { compareValueExpression });
+                    break;
+
                 default:
+                    compareValueExpression = CreateValueExpression(conditionData.ComparisonValue);
                     parameters = new CommaSeparatedSyntaxList<ExpressionSyntax>(new[] { compareValueExpression });
                     break;
             }
@@ -324,7 +343,7 @@ namespace Logic.Business.LaytonDocomoTool
         private CommaSeparatedSyntaxList<ExpressionSyntax> CreateCommaSeparatedList(EventData eventData)
         {
             var result = new List<ExpressionSyntax>();
-            
+
             if (eventData is ConditionalBranchBlockEventData conditionalBranch)
             {
                 result.Add(CreateValueExpression(conditionalBranch.Id));
@@ -335,6 +354,20 @@ namespace Logic.Business.LaytonDocomoTool
             else if (eventData is BranchEventData branch)
             {
                 result.Add(CreateValueExpression(branch.Id));
+            }
+            else if (eventData is SetBitFlgEventData setBitFlg)
+            {
+                ExpressionSyntax eventExpression = _parameterMapper.TryGetBitName(setBitFlg.Index, out string bitName)
+                    ? CreateValueExpression(bitName)
+                    : CreateValueExpression(setBitFlg.Index);
+                result.Add(eventExpression);
+            }
+            else if (eventData is SetStoryEventData setStory)
+            {
+                ExpressionSyntax eventExpression = _parameterMapper.TryGetStoryName(setStory.Id, out string storyName)
+                    ? CreateValueExpression(storyName)
+                    : CreateValueExpression(setStory.Id);
+                result.Add(eventExpression);
             }
             else
             {

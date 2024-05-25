@@ -19,6 +19,9 @@ namespace Logic.Business.LaytonDocomoTool
         [ConfigMap("CommandLine", new[] { "t", "type" })]
         public virtual string Type { get; set; } = "jar";
 
+        [ConfigMap("CommandLine", new[] { "m", "mapping" })]
+        public virtual string? MappingPath { get; set; } = null;
+
         [ConfigMap("CommandLine", new[] { "f", "file" })]
         public virtual string FilePath { get; set; } = string.Empty;
     }

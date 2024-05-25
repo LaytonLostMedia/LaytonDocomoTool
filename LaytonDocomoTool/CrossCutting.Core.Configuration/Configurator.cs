@@ -49,11 +49,11 @@ namespace CrossCutting.Core.Configuration
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentNullException(nameof(key));
 
-            ConfigCategory configCategory = _categories.SingleOrDefault(c => c.Name == category);
+            ConfigCategory configCategory = _categories.FirstOrDefault(c => c.Name == category);
             if (configCategory == null)
                 return defaultValue;
 
-            ConfigEntry entry = configCategory.Entries.SingleOrDefault(e => e.Key == key);
+            ConfigEntry entry = configCategory.Entries.FirstOrDefault(e => e.Key == key);
             if (entry == null)
                 return defaultValue;
 

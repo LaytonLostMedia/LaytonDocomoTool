@@ -40,6 +40,7 @@ namespace Logic.Business.LaytonDocomoTool
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CreateTableWorkflow))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CreateResourceWorkflow))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(EncodingProvider))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ScriptParameterMapper))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties, typeof(LaytonDocomoExtractorConfiguration))]
         public void Register(ICoCoKernel kernel)
         {
@@ -60,6 +61,7 @@ namespace Logic.Business.LaytonDocomoTool
             kernel.Register<ICreateResourceWorkflow, CreateResourceWorkflow>(ActivationScope.Unique);
 
             kernel.Register<IEncodingProvider, EncodingProvider>(ActivationScope.Unique);
+            kernel.Register<IScriptParameterMapper, ScriptParameterMapper>(ActivationScope.Unique);
 
             kernel.RegisterConfiguration<LaytonDocomoExtractorConfiguration>();
         }

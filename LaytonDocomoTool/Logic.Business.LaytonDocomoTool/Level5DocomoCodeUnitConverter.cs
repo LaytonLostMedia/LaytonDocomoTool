@@ -10,9 +10,13 @@ namespace Logic.Business.LaytonDocomoTool
     {
         private readonly IDictionary<string, Type> _eventDataTypes;
 
-        public Level5DocomoCodeUnitConverter()
+        private readonly IScriptParameterMapper _parameterMapper;
+
+        public Level5DocomoCodeUnitConverter(IScriptParameterMapper parameterMapper)
         {
             _eventDataTypes = CacheEventDataTypes();
+
+            _parameterMapper = parameterMapper;
         }
 
         public EventData[] CreateEvents(CodeUnitSyntax codeUnit)
@@ -133,7 +137,7 @@ namespace Logic.Business.LaytonDocomoTool
                 comparisonExpression = unaryExpression.Expression;
 
             result.ComparisonType = GetComparisonType(comparisonExpression);
-            result.ComparisonValue = GetComparisonValue(comparisonExpression);
+            result.ComparisonValue = GetComparisonValue(comparisonExpression, result.ComparisonType);
 
             return result;
         }
@@ -182,14 +186,40 @@ namespace Logic.Business.LaytonDocomoTool
             }
         }
 
-        private short GetComparisonValue(ExpressionSyntax expression)
+        private short GetComparisonValue(ExpressionSyntax expression, int type)
         {
             if (expression is FunctionInvocationExpressionSyntax functionInvocation)
             {
                 if (functionInvocation.ParameterList.Parameters.Elements.Count <= 0)
                     return 0;
 
-                return GetValue<short>(functionInvocation.ParameterList.Parameters.Elements[0]);
+                switch (type)
+                {
+                    case 12:
+                        if (functionInvocation.ParameterList.Parameters.Elements[0] is LiteralExpressionSyntax { Literal.RawKind: (int)Level5DocomoTokenKind.StringLiteral } literal)
+                        {
+                            var bitName = GetValue<string>(literal);
+                            if (!_parameterMapper.TryGetBitValue(bitName, out int value))
+                                throw new InvalidOperationException($"Bit name '{bitName}' is not mapped to an ID.");
+
+                            return (short)value;
+                        }
+                        goto default;
+
+                    case 14:
+                        if (functionInvocation.ParameterList.Parameters.Elements[0] is LiteralExpressionSyntax { Literal.RawKind: (int)Level5DocomoTokenKind.StringLiteral } literal1)
+                        {
+                            var storyName = GetValue<string>(literal1);
+                            if (!_parameterMapper.TryGetStoryValue(storyName, out int value))
+                                throw new InvalidOperationException($"Story name '{storyName}' is not mapped to an ID.");
+
+                            return (short)value;
+                        }
+                        goto default;
+
+                    default:
+                        return GetValue<short>(functionInvocation.ParameterList.Parameters.Elements[0]);
+                }
             }
 
             if (expression is not BinaryExpressionSyntax binaryExpression)
@@ -224,6 +254,34 @@ namespace Logic.Business.LaytonDocomoTool
             else if (eventData is BranchEventData branch)
             {
                 branch.Id = GetValue<byte>(parameters[0]);
+            }
+            else if (eventData is SetBitFlgEventData setBitFlg)
+            {
+                if (parameters[0] is LiteralExpressionSyntax { Literal.RawKind: (int)Level5DocomoTokenKind.StringLiteral })
+                {
+                    var bitName = GetValue<string>(parameters[0]);
+                    if (!_parameterMapper.TryGetBitValue(bitName, out int value))
+                        throw new InvalidOperationException($"Bit name '{bitName}' is not mapped to an ID.");
+
+                    setBitFlg.Index = (byte)value;
+                    return;
+                }
+
+                setBitFlg.Index = GetValue<byte>(parameters[0]);
+            }
+            else if (eventData is SetStoryEventData setStory)
+            {
+                if (parameters[0] is LiteralExpressionSyntax { Literal.RawKind: (int)Level5DocomoTokenKind.StringLiteral })
+                {
+                    var storyName = GetValue<string>(parameters[0]);
+                    if (!_parameterMapper.TryGetStoryValue(storyName, out int value))
+                        throw new InvalidOperationException($"Story name '{storyName}' is not mapped to an ID.");
+
+                    setStory.Id = (byte)value;
+                    return;
+                }
+
+                setStory.Id = GetValue<byte>(parameters[0]);
             }
             else
             {
