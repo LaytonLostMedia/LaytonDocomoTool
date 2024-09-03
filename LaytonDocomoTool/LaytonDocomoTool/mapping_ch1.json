@@ -1,8 +1,25 @@
 {
-	"Bits": {
-		1: "is_evt001_done"
-	},
-	"Stories": {
-		1: "is_story_done"
-	}
+  "Bits": {
+  },
+  "Stories": {
+  },
+  "Speakers": {
+    "0": "Layton",
+    "1": "Luke",
+    "2": "Chelmey",
+    "3": "Barton",
+    "4": "Murdoch",
+    "6": "Randy",
+    "7": "Feldin",
+    "8": "Kate",
+    "9": "Roddy",
+    "10": "Cornes",
+    "11": "Rigel",
+    "12": "Mylene",
+    "13": "Johnny",
+    "14": "David",
+    "15": "Grandma",
+    "39": "AD",
+    "40": "Narrator"
+  }
 }

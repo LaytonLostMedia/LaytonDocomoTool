@@ -16,8 +16,11 @@ namespace Logic.Business.LaytonDocomoTool
         private readonly ILevel5DocomoWhitespaceNormalizer _whitespaceNormalizer;
         private readonly ILevel5DocomoComposer _scriptComposer;
 
+        private readonly IScriptParameterMapper _mapper;
+
         public ExtractScriptWorkflow(LaytonDocomoExtractorConfiguration config, IScriptReader scriptReader, IScriptParser scriptParser, IEncodingProvider encodingProvider,
-            ILevel5DocomoEventDataConverter scriptConverter, ILevel5DocomoWhitespaceNormalizer whitespaceNormalizer, ILevel5DocomoComposer scriptComposer)
+            ILevel5DocomoEventDataConverter scriptConverter, ILevel5DocomoWhitespaceNormalizer whitespaceNormalizer, ILevel5DocomoComposer scriptComposer,
+            IScriptParameterMapper mapper)
         {
             _config = config;
             _scriptReader = scriptReader;
@@ -26,6 +29,8 @@ namespace Logic.Business.LaytonDocomoTool
             _scriptConverter = scriptConverter;
             _whitespaceNormalizer = whitespaceNormalizer;
             _scriptComposer = scriptComposer;
+
+            _mapper = mapper;
         }
 
         public void Work()

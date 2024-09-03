@@ -94,10 +94,10 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                     var addEventBytes = new List<byte>();
                     addEventBytes.AddRange(new[]
                     {
-                        addEvent.Value1,
-                        (byte)addEvent.Value2, (byte)(addEvent.Value2 >> 8),
-                        addEvent.Value3,
-                        addEvent.Value4,
+                        addEvent.EventType,
+                        (byte)addEvent.SpeakerId, (byte)(addEvent.SpeakerId >> 8),
+                        addEvent.RankX,
+                        addEvent.RankY,
                         (byte)addEvent.X, (byte)(addEvent.X >> 8),
                         (byte)addEvent.Y, (byte)(addEvent.Y >> 8),
                     });
@@ -107,7 +107,7 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                     addEventBytes.AddRange(new[] { (byte)textBytes.Length, (byte)(textBytes.Length >> 8) });
                     addEventBytes.AddRange(textBytes);
 
-                    if (addEvent.Value1 != 4)
+                    if (addEvent.EventType != 4)
                     {
                         addEventEntry.dataSize = (short)addEventBytes.Count;
                         addEventEntry.data = addEventBytes.ToArray();
@@ -562,8 +562,8 @@ namespace Logic.Domain.Level5Management.Docomo.Script
 
                     var textWindowBytes = new List<byte>
                     {
-                        textWindow.Value1,
-                        textWindow.PersonId
+                        textWindow.SpeakerSide,
+                        textWindow.SpeakerId
                     };
 
                     byte[] textBytes1 = textEncoding.GetBytes(textWindow.Text);

@@ -8,8 +8,8 @@ namespace Logic.Domain.Level5Management.Docomo.Contract.Script.DataClasses
 {
     public class TextWindowEventData : EventData
     {
-        public byte Value1 { get; set; }
-        public byte PersonId { get; set; }
+        public byte SpeakerSide { get; set; }
+        public byte SpeakerId { get; set; }
         public string Text { get; set; }
     }
 }

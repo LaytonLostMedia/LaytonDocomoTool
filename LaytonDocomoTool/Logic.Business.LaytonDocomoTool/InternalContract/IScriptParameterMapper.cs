@@ -7,5 +7,8 @@
 
         bool TryGetStoryName(int value, out string? name);
         bool TryGetStoryValue(string name, out int value);
+
+        bool TryGetSpeakerName(int value, out string? name);
+        bool TryGetSpeakerValue(string name, out int value);
     }
 }

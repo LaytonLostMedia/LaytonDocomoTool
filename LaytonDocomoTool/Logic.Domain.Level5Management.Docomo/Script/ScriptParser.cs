@@ -203,10 +203,10 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                 case "addEvent":
                     var addEvent = new AddEventEventData
                     {
-                        Value1 = entry.data[0],
-                        Value2 = (short)(entry.data[1] | (entry.data[2] << 8)),
-                        Value3 = entry.data[3],
-                        Value4 = entry.data[4],
+                        EventType = entry.data[0],
+                        SpeakerId = (short)(entry.data[1] | (entry.data[2] << 8)),
+                        RankX = entry.data[3],
+                        RankY = entry.data[4],
                         X = (short)(entry.data[5] | (entry.data[6] << 8)),
                         Y = (short)(entry.data[7] | (entry.data[8] << 8))
                     };
@@ -218,7 +218,7 @@ namespace Logic.Domain.Level5Management.Docomo.Script
 
                     addEvent.Text = textEncoding.GetString(nameData);
 
-                    if (addEvent.Value1 != 4)
+                    if (addEvent.EventType != 4)
                         return addEvent;
 
                     addEvent.Value5 = entry.data[nameSize + 11];
@@ -516,8 +516,8 @@ namespace Logic.Domain.Level5Management.Docomo.Script
                 case "TextWindow":
                     var textEvent = new TextWindowEventData
                     {
-                        Value1 = entry.data[0],
-                        PersonId = entry.data[1]
+                        SpeakerSide = entry.data[0],
+                        SpeakerId = entry.data[1]
                     };
 
                     var textLength = (short)(entry.data[2] | (entry.data[3] << 8));

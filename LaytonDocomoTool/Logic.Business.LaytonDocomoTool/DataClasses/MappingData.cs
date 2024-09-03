@@ -10,5 +10,6 @@ namespace Logic.Business.LaytonDocomoTool.DataClasses
     {
         public IDictionary<int, string> Bits { get; set; }
         public IDictionary<int, string> Stories { get; set; }
+        public IDictionary<int, string> Speakers { get; set; }
     }
 }

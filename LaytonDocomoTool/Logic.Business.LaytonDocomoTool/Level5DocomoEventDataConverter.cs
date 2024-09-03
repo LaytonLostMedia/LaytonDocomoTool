@@ -357,17 +357,48 @@ namespace Logic.Business.LaytonDocomoTool
             }
             else if (eventData is SetBitFlgEventData setBitFlg)
             {
-                ExpressionSyntax eventExpression = _parameterMapper.TryGetBitName(setBitFlg.Index, out string bitName)
-                    ? CreateValueExpression(bitName)
+                ExpressionSyntax eventExpression = _parameterMapper.TryGetBitName(setBitFlg.Index, out string? bitName)
+                    ? CreateValueExpression(bitName!)
                     : CreateValueExpression(setBitFlg.Index);
+
                 result.Add(eventExpression);
             }
             else if (eventData is SetStoryEventData setStory)
             {
-                ExpressionSyntax eventExpression = _parameterMapper.TryGetStoryName(setStory.Id, out string storyName)
-                    ? CreateValueExpression(storyName)
+                ExpressionSyntax eventExpression = _parameterMapper.TryGetStoryName(setStory.Id, out string? storyName)
+                    ? CreateValueExpression(storyName!)
                     : CreateValueExpression(setStory.Id);
+
                 result.Add(eventExpression);
+            }
+            else if (eventData is TextWindowEventData textWindow)
+            {
+                ExpressionSyntax idExpression = _parameterMapper.TryGetSpeakerName(textWindow.SpeakerId, out string? speakerName)
+                    ? CreateValueExpression(speakerName!)
+                    : CreateValueExpression(textWindow.SpeakerId);
+
+                result.Add(CreateValueExpression(textWindow.SpeakerSide));
+                result.Add(idExpression);
+                result.Add(CreateValueExpression(textWindow.Text));
+            }
+            else if (eventData is AddEventEventData addEvent)
+            {
+                ExpressionSyntax idExpression = addEvent.EventType == 1 && _parameterMapper.TryGetSpeakerName(addEvent.SpeakerId, out string? speakerName)
+                    ? CreateValueExpression(speakerName!)
+                    : CreateValueExpression(addEvent.SpeakerId);
+
+                result.Add(CreateValueExpression(addEvent.EventType));
+                result.Add(idExpression);
+                result.Add(CreateValueExpression(addEvent.RankX));
+                result.Add(CreateValueExpression(addEvent.RankY));
+                result.Add(CreateValueExpression(addEvent.X));
+                result.Add(CreateValueExpression(addEvent.Y));
+                result.Add(CreateValueExpression(addEvent.Text));
+
+                if (addEvent.Value5 != null)
+                    result.Add(CreateValueExpression(addEvent.Value5));
+                if (addEvent.Value6 != null)
+                    result.Add(CreateValueExpression(addEvent.Value6));
             }
             else
             {

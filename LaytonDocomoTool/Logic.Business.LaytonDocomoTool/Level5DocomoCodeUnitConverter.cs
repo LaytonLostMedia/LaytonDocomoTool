@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Logic.Business.LaytonDocomoTool.InternalContract;
 using Logic.Domain.CodeAnalysis.Contract.Level5.Docomo.DataClasses;
@@ -257,6 +258,9 @@ namespace Logic.Business.LaytonDocomoTool
             }
             else if (eventData is SetBitFlgEventData setBitFlg)
             {
+                if (parameters.Count < 0)
+                    return;
+
                 if (parameters[0] is LiteralExpressionSyntax { Literal.RawKind: (int)Level5DocomoTokenKind.StringLiteral })
                 {
                     var bitName = GetValue<string>(parameters[0]);
@@ -271,6 +275,9 @@ namespace Logic.Business.LaytonDocomoTool
             }
             else if (eventData is SetStoryEventData setStory)
             {
+                if (parameters.Count < 0)
+                    return;
+
                 if (parameters[0] is LiteralExpressionSyntax { Literal.RawKind: (int)Level5DocomoTokenKind.StringLiteral })
                 {
                     var storyName = GetValue<string>(parameters[0]);
@@ -282,6 +289,63 @@ namespace Logic.Business.LaytonDocomoTool
                 }
 
                 setStory.Id = GetValue<byte>(parameters[0]);
+            }
+            else if (eventData is TextWindowEventData textWindow)
+            {
+                if (parameters.Count >= 0)
+                    textWindow.SpeakerSide = GetValue<byte>(parameters[0]);
+                if (parameters.Count >= 2)
+                    textWindow.Text = GetValue<string>(parameters[2]);
+
+                if (parameters.Count < 1)
+                    return;
+
+                if (parameters[1] is LiteralExpressionSyntax { Literal.RawKind: (int)Level5DocomoTokenKind.StringLiteral })
+                {
+                    var speakerName = GetValue<string>(parameters[1]);
+                    if (!_parameterMapper.TryGetSpeakerValue(speakerName, out int value))
+                        throw new InvalidOperationException($"Speaker name '{speakerName}' is not mapped to an ID.");
+
+                    textWindow.SpeakerId = (byte)value;
+                    return;
+                }
+
+                textWindow.SpeakerId = GetValue<byte>(parameters[1]);
+            }
+            else if (eventData is AddEventEventData addEvent)
+            {
+                if (parameters.Count >= 0)
+                    addEvent.EventType = GetValue<byte>(parameters[0]);
+                if (parameters.Count >= 2)
+                    addEvent.RankX = GetValue<byte>(parameters[2]);
+                if (parameters.Count >= 3)
+                    addEvent.RankY = GetValue<byte>(parameters[3]);
+                if (parameters.Count >= 4)
+                    addEvent.X = GetValue<byte>(parameters[4]);
+                if (parameters.Count >= 5)
+                    addEvent.Y = GetValue<byte>(parameters[5]);
+                if (parameters.Count >= 6)
+                    addEvent.Text = GetValue<string>(parameters[6]);
+
+                if (parameters.Count >= 7)
+                    addEvent.Value5 = GetValue<byte>(parameters[7]);
+                if (parameters.Count >= 8)
+                    addEvent.Value6 = GetValue<byte>(parameters[8]);
+
+                if (parameters.Count < 1)
+                    return;
+
+                if (addEvent.EventType == 1 && parameters[1] is LiteralExpressionSyntax { Literal.RawKind: (int)Level5DocomoTokenKind.StringLiteral })
+                {
+                    var speakerName = GetValue<string>(parameters[1]);
+                    if (!_parameterMapper.TryGetSpeakerValue(speakerName, out int value))
+                        throw new InvalidOperationException($"Speaker name '{speakerName}' is not mapped to an ID.");
+
+                    addEvent.SpeakerId = (short)value;
+                    return;
+                }
+
+                addEvent.SpeakerId = GetValue<short>(parameters[1]);
             }
             else
             {

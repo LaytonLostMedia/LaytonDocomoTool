@@ -8,10 +8,10 @@ namespace Logic.Domain.Level5Management.Docomo.Contract.Script.DataClasses
 {
     public class AddEventEventData:EventData
     {
-        public byte Value1 { get; set; }
-        public short Value2 { get; set; }
-        public byte Value3 { get; set; }
-        public byte Value4 { get; set; }
+        public byte EventType { get; set; }
+        public short SpeakerId { get; set; }
+        public byte RankX { get; set; }
+        public byte RankY { get; set; }
         public short X { get; set; }
         public short Y { get; set; }
         public string Text { get; set; }
