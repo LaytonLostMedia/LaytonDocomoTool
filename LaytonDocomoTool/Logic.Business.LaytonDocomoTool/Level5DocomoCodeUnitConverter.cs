@@ -292,9 +292,9 @@ namespace Logic.Business.LaytonDocomoTool
             }
             else if (eventData is TextWindowEventData textWindow)
             {
-                if (parameters.Count >= 0)
+                if (parameters.Count > 0)
                     textWindow.SpeakerSide = GetValue<byte>(parameters[0]);
-                if (parameters.Count >= 2)
+                if (parameters.Count > 2)
                     textWindow.Text = GetValue<string>(parameters[2]);
 
                 if (parameters.Count < 1)
@@ -314,22 +314,22 @@ namespace Logic.Business.LaytonDocomoTool
             }
             else if (eventData is AddEventEventData addEvent)
             {
-                if (parameters.Count >= 0)
+                if (parameters.Count > 0)
                     addEvent.EventType = GetValue<byte>(parameters[0]);
-                if (parameters.Count >= 2)
+                if (parameters.Count > 2)
                     addEvent.RankX = GetValue<byte>(parameters[2]);
-                if (parameters.Count >= 3)
+                if (parameters.Count > 3)
                     addEvent.RankY = GetValue<byte>(parameters[3]);
-                if (parameters.Count >= 4)
+                if (parameters.Count > 4)
                     addEvent.X = GetValue<byte>(parameters[4]);
-                if (parameters.Count >= 5)
+                if (parameters.Count > 5)
                     addEvent.Y = GetValue<byte>(parameters[5]);
-                if (parameters.Count >= 6)
+                if (parameters.Count > 6)
                     addEvent.Text = GetValue<string>(parameters[6]);
 
-                if (parameters.Count >= 7)
+                if (parameters.Count > 7)
                     addEvent.Value5 = GetValue<byte>(parameters[7]);
-                if (parameters.Count >= 8)
+                if (parameters.Count > 8)
                     addEvent.Value6 = GetValue<byte>(parameters[8]);
 
                 if (parameters.Count < 1)
