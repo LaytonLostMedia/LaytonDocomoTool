@@ -60,7 +60,7 @@ namespace Logic.Domain.Level5Management.Docomo.Table
                     continue;
                 }
 
-                if (entry.name is "map.dat" or "memo.dat" or "monooki.dat" or "target.dat")
+                if (entry.name is "map.dat" or "memo.dat" or "minigame.dat" or "monooki.dat" or "target.dat")
                 {
                     texts.Add(entryData);
                     continue;
