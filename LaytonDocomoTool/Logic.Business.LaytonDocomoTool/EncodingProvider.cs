@@ -16,17 +16,13 @@ namespace Logic.Business.LaytonDocomoTool
 
         public Encoding GetEncoding()
         {
-            switch (_config.Encoding)
-            {
-                case "sjis":
-                    return Encoding.GetEncoding("Shift-JIS");
+            if (_config.Encoding.Equals("sjis", StringComparison.OrdinalIgnoreCase))
+                return Encoding.GetEncoding("Shift-JIS");
 
-                case "windows-1252":
-                    return Encoding.Latin1;
+            if (_config.Encoding.Equals("windows-1252", StringComparison.OrdinalIgnoreCase))
+                return Encoding.GetEncoding("Windows-1252");
 
-                default:
-                    throw new InvalidOperationException($"Unknown encoding '{_config.Encoding}'.");
-            }
+            throw new InvalidOperationException($"Unknown encoding '{_config.Encoding}'.");
         }
     }
 }
